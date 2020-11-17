@@ -1,15 +1,46 @@
 import React from 'react';
 import socketClient from 'socket.io-client';
 import './App.css';
+import 'bootstrap/dist/css/bootstrap.css';
+import {Button, InputGroup, FormControl, Col, Container, Row} from 'react-bootstrap';
 const SERVER = 'http://localhost:8000'
 
 class NameBox extends React.Component {
-  
+  constructor(props) {
+    super(props);
+    this.name = React.createRef();
+    this.handleClick = this.handleClick.bind(this);
+    this.handleKeyPress = this.handleKeyPress.bind(this);
+  }
+
+  handleClick() {
+    if(this.name.current.value && this.name.current.value !== '') this.props.handleClick(this.name.current.value);
+    var nickname = document.getElementById('name');
+    nickname.textContent = this.name.current.value;
+    this.name.current.value = "";
+  }
+
+  handleKeyPress(e) {
+    if (e.key === 'Enter') {
+      this.handleClick();
+    }
+  }
+
   render() {
     return (
-      <div className = 'namebox'>
-        <input type='text' placeholder='Your name...'></input>
-        <button onClick = {this.props.handleClick}>OK</button>
+      <div className='namebox' onKeyPress = {this.handleKeyPress} >
+        <InputGroup className="mb-3" size='sm'>
+          <InputGroup.Prepend>
+            <InputGroup.Text id='name'>No name specified yet</InputGroup.Text>
+          </InputGroup.Prepend>
+          <FormControl
+            placeholder="Your name..."
+            ref = {this.name}
+          />
+          <InputGroup.Append>
+            <Button onClick = {this.handleClick} variant="info">OK</Button>
+          </InputGroup.Append>
+        </InputGroup>
       </div>
     )
   }
@@ -17,7 +48,11 @@ class NameBox extends React.Component {
 
 
 class ChatBox extends React.Component {
-  
+  constructor(props) {
+    super(props);
+    this.handleMessageClick = this.handleMessageClick.bind(this);
+  }
+
   scrollToBottom = () => {
     var el = this.refs.scroll;
     el.scrollTop = el.scrollHeight;
@@ -31,30 +66,24 @@ class ChatBox extends React.Component {
     this.scrollToBottom();
   }
 
-  handleNameClick() {
-    // To handle click of channel box
-  }
-
-  handleKeyPress() {
-    // To send the message whenever enter is pressed
-  }
-
-  handleMessageClick() {
-    // To send the message whenever send button is pressed
+  handleMessageClick(message) {
+    this.props.handleMessageClick(message);
   }
 
 
   render() {
     return (
-      <div className='chatwindow'>
-        <NameBox handleClick = {this.handleNameClick}/>
-        <ul className = 'chatbox' ref='scroll'>
-          {/* {this.props.messages.map((message, index) => 
-            <MessageBox key={index} message={message["message"]} appearance={["isSelfMessage"]? 'left': 'right'}/>
-          )} */}
-        </ul>
-        <InputMessageBox handleKeyPress = {this.handleKeyPress} handleClick = {this.handleMessageClick}/>
-      </div>
+      <Container className = 'chatwindow'>
+        <Row><NameBox handleClick = {this.props.handleNameClick}/></Row>
+        <Row>
+          <ul className = 'chatbox' ref='scroll'>
+            {/* {this.props.messages.map((message, index) => 
+              <MessageBox key={index} message={message["message"]} appearance={["isSelfMessage"]? 'left': 'right'}/>
+            )} */}
+          </ul>
+        </Row>
+        <Row><InputMessageBox handleClick = {this.handleMessageClick}/></Row>
+      </Container>
     )
   }
 }
@@ -73,13 +102,39 @@ class MessageBox extends React.Component {
 }
 
 class InputMessageBox extends React.Component {
+  constructor(props) {
+    super(props);
+    this.message = React.createRef();
+
+    this.handleClick = this.handleClick.bind(this);
+    this.handleKeyPress = this.handleKeyPress.bind(this);
+  }
+
+  handleClick() {
+    if(this.message.current.value && this.message.current.value !== '')
+    this.props.handleClick(this.message.current.value);
+    this.message.current.value = "";
+  }
+
+  handleKeyPress(e) {
+    if(e.key === 'Enter') {
+      this.handleClick();
+    }
+  }
+
   render() {
     return (
-      <div className = 'inputmessagebox' onKeyPress={this.props.handleKeyPress}>
-        <div className="messageinput">
-          <input type='text' placeholder='Type your messages here...'></input>
-        </div>
-        <SendButton handleClick={this.props.handleClick}/>
+      <div className = 'inputmessagebox' onKeyPress = {this.handleKeyPress}>
+        <InputGroup className="mb-3" size='sm'>
+        <FormControl
+          placeholder="Type your messages here..."
+          ref={this.message}
+        />
+        <InputGroup.Append>
+          <Button variant="secondary">Choose file</Button>
+          <SendButton handleClick={this.handleClick}/>
+        </InputGroup.Append>
+        </InputGroup>
       </div>
     )
   }
@@ -88,9 +143,9 @@ class InputMessageBox extends React.Component {
 class SendButton extends React.Component {
   render() {
     return (
-      <div className = "sendmessage">
-        <button onClick={this.props.handleClick}>Send</button>
-      </div>
+      <>
+        <Button variant="success" size="sm" onClick={this.props.handleClick}>Send</Button>{' '}
+      </>
     )
   }
 }
@@ -98,19 +153,42 @@ class SendButton extends React.Component {
 class Channels extends React.Component {
   render() {
     return(
-      <ul className = 'channellist'>
-          {/* {this.props.channels.map((channel, index) => 
-            <Channel key={index} onClick={this.props.handleChannelClick} channelName={channel}/>
-          )} */}
-      </ul>
+      <div className="channelblock">
+        <div className='channellist'>
+          <div style={{borderBottom: '1px solid rgb(89, 161, 29)'}}>
+            <div className="d-inline text-dark" style={{backgroundColor: "#d9ffa4", margin: "10px 5px"}}>Channels</div>
+          </div>
+        <ul>
+            {/* this.props.channels.map((channel, index) => 
+              <Channel key={index} onClick={this.props.handleChannelClick} channelName={channel}/>
+            ) */}
+        </ul>
+        </div>
+        <InputGroup className="mb-3" size='sm'>
+        <FormControl
+          placeholder="Channel"
+          aria-label="newChannel"
+          aria-describedby="message"
+        />
+        <InputGroup.Append>
+          <Button variant="info">Create</Button>
+        </InputGroup.Append>
+        </InputGroup>
+      </div>
     )
   }
 }
 
 class Channel extends React.Component {
+  click () {
+    this.props.handleChannelClick(this.props.channelName);
+  }
   render() {
     return (
-      <div className = 'channel' onClick={this.props.handleChannelClick}> {this.props.channelName}</div>
+      <div className = 'channel' onClick={this.click}> 
+        <div>{this.props.channelName}</div>
+        <span>{this.props.participants}</span>
+      </div>
     )
   }
 }
@@ -125,6 +203,10 @@ class App extends React.Component {
       channels: null,
       channel: null
     }
+
+    this.handleChannelClick = this.handleChannelClick.bind(this);
+    this.handleNameClick = this.handleNameClick.bind(this);
+    this.handleMessageClick = this.handleMessageClick.bind(this);
   }
 
   componentDidMount() {
@@ -141,16 +223,46 @@ class App extends React.Component {
     this.state.socket = socket;
   }
 
-  handleChannelClick() {
+  handleChannelClick(id) {
+    let ch = this.state.channels.find(c=> {
+      return c.id == id;
+    });
+    this.setState({
+      socket: this.state.socket,
+      username: this.state.username,
+      channels: this.state.channels,
+      channel: ch
+    });
+    this.socket.emit('channel-join', id, ack => {
+      console.log("joined channel" + id);
+    })
+  }
 
+  handleNameClick(name) {
+    this.setState({
+      socket: this.state.socket,
+      username: name,
+      channels: this.state.channels,
+      channel: this.state.channel
+    });
+    console.log('Setting username: ' + name);
+  }
+
+  handleMessageClick(message) {
+    this.state.socket.emit('send-message', {channel: this.state.channel, message: message, senderName: this.state.username })
+    console.log('Message sent to the server');
   }
 
   render() {
     return (
-      <div className="App">
-        <Channels handleChannelClick={this.handleChannelClick}></Channels>
-        <ChatBox messages = {this.state.messages}></ChatBox>
-      </div>
+      <>
+      <Container style={{margin: '0 0 0 0', maxWidth: '100%', minHeight: '100vh', overflow: 'hidden', padding: '10px'}}>
+        <Row>
+          <Col style={{paddingRight: '0px'}}><Channels handleChannelClick={this.handleChannelClick}></Channels></Col>
+          <Col xs={9}><ChatBox handleNameClick= {this.handleNameClick} handleMessageClick={this.handleMessageClick} channel={this.state.channel} messages = {this.state.messages}></ChatBox></Col>
+        </Row>
+      </Container>
+      </>
     ) 
   }
 }
