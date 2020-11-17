@@ -1,38 +1,174 @@
 .App {
   text-align: center;
+  width: 100%;
+  height: 100%;
+  display: flex;
 }
 
-.App-logo {
-  height: 40vmin;
+.channellist {
+  width: calc(20% - 12px);
+  border: 1px solid rgb(224, 224, 224);
+  margin: 10px;
+  margin-right: 0;
+  border-right: none;
+  height: calc(100% - 22px);
+}
+
+.channel-item {
+  border-bottom: 1px solid rgb(224, 224, 224);
+  padding: 10px;
+  font-weight: bold;
+}
+
+.channel-item:hover {
+  background-color: rgb(224, 224, 224);
+  cursor: pointer;
+}
+
+.namebox {
+  background-color: #fff;
+  width: 40%;
+  float: right;
+  box-shadow: 0 1px 30px rgba(0, 0, 0, 0.1);
+}
+
+.chatwindow {
+  width: calc(80% - 20px);
+  border-radius: 10px;
+  background-color: #fff;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  background-color: #f8f8f8;
+  overflow: hidden;
+  height: 100vh;
+}
+
+.inputmessagebox {
+  position: relative;
+  width: 100%;
+  background-color: #fff;
+  padding: 20px 20px;
+  /*position: absolute;*/
+  bottom: 0;
+}
+
+.inputmessagebox .messageinput {
+  display: inline-block;
+  height: 50px;
+  border-radius: 25psx;
+  border: 1px solid #bcbdc0;
+  width: calc(100% - 160px);
+  position: relative;
+  padding: 0 20px;
+}
+
+.inputmessagebox .sendmessage {
+  width: 140px;
+  height: 50px;
+  display: inline-block;
+  border-radius: 50px;
+  background-color: #a3d063;
+  border: 2px solid #a3d063;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s linear;
+  text-align: center;
+  float: right;
+}
+
+.inputmessagebox .sendmessage:hover {
+  color: #a3d063;
+  background-color: #fff;
+}
+
+.chatbox {
+  position: relative;
+  list-style: none;
+  padding: 20px 10px 0 10px;
+  margin: 0;
+  height: calc(100vh - 250px);
+  overflow: scroll;
+}
+
+.chatbox .message {
+  clear: both;
+  overflow: hidden;
+  margin-bottom: 20px;
+  transition: all 0.5s linear;
+  opacity: 0;
+}
+
+.chatbox .message .left .avatar {
+  background-color: #f5886e;
+  float: left;
+}
+
+.chatbox .message .left .textwrap {
+  background-color: #ffe6cb;
+  margin-left: 20px;
+}
+
+.chatbox .message.left .textwrap::after, .chatbox .message.left .text_wrapper::before {
+  right: 100%;
+  border-right-color: #ffe6cb;
+}
+
+.chatbox .message.left .text {
+  color: #c48843;
+}
+
+.chatbox .message.right .avatar {
+  background-color: #fdbf68;
+  float: right;
+}
+.chatbox .message.right .textwrap {
+  background-color: #c7eafc;
+  margin-right: 20px;
+  float: right;
+}
+.chatbox .message.right .textwrap::after, .chatbox .message.right .textwrap::before {
+  left: 100%;
+  border-left-color: #c7eafc;
+}
+
+.chatbox .message.right .text {
+  color: #45829b;
+}
+
+.chatbox .message.appeared {
+  opacity: 1;
+}
+.chatbox .message .avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.chatbox .message .textwrap {
+  display: inline-block;
+  padding: 20px;
+  border-radius: 6px;
+  width: calc(100% - 85px);
+  min-width: 100px;
+  position: relative;
+}
+.chatbox .message .textwrap::after, .chatbox .message .textwrap:before {
+  top: 18px;
+  border: solid transparent;
+  content: " ";
+  height: 0;
+  width: 0;
+  position: absolute;
   pointer-events: none;
 }
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.chatbox .message .textwrap::after {
+  border-width: 13px;
+  margin-top: 0px;
 }
-
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.chatbox .message .textrap::before {
+  border-width: 15px;
+  margin-top: -2px;
 }
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.chatbox .message .textwrap.text {
+  font-size: 18px;
+  font-weight: 300;
 }
