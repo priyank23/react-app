@@ -26,6 +26,14 @@ io.on('connect', (socket) => {
     socket.on('disconnect', () => {
         console.log(address.address + ':' + address.port + ' Disconnected!!')
     })
+
+    socket.on('send-message', data => {
+        console.log('Message received!');
+        console.log('Channel: '+ data.channel);
+        console.log('User: '+ data.senderName);
+        console.log('Message: '+ data.message);
+        socket.broadcast.emit('message', data);
+    } )
 })
 
 http.listen(8000, () => {

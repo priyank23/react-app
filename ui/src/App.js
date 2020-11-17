@@ -48,10 +48,6 @@ class NameBox extends React.Component {
 
 
 class ChatBox extends React.Component {
-  constructor(props) {
-    super(props);
-    this.handleMessageClick = this.handleMessageClick.bind(this);
-  }
 
   scrollToBottom = () => {
     var el = this.refs.scroll;
@@ -66,23 +62,19 @@ class ChatBox extends React.Component {
     this.scrollToBottom();
   }
 
-  handleMessageClick(message) {
-    this.props.handleMessageClick(message);
-  }
-
-
   render() {
     return (
       <Container className = 'chatwindow'>
         <Row><NameBox handleClick = {this.props.handleNameClick}/></Row>
         <Row>
           <ul className = 'chatbox' ref='scroll'>
-            {/* {this.props.messages.map((message, index) => 
-              <MessageBox key={index} message={message["message"]} appearance={["isSelfMessage"]? 'left': 'right'}/>
-            )} */}
+            {console.log("HErererea")}
+            {this.props.messages.map((message, index) => 
+              <MessageBox key={index} message={message["message"]} appearance={message["username"] === "Me" ? 'left': 'right'}/>
+            )}
           </ul>
         </Row>
-        <Row><InputMessageBox handleClick = {this.handleMessageClick}/></Row>
+        <Row><InputMessageBox handleClick = {this.props.handleMessageClick}/></Row>
       </Container>
     )
   }
@@ -201,7 +193,8 @@ class App extends React.Component {
       socket: null,
       username: null,
       channels: null,
-      channel: null
+      channel: null,
+      messages: []
     }
 
     this.handleChannelClick = this.handleChannelClick.bind(this);
@@ -220,6 +213,15 @@ class App extends React.Component {
       console.log('Connected with the server')
     })
 
+    socket.on('message', data => {
+      if(data.channel === this.state.channel) {    // checking of null channel to be added
+        let messages = this.state.messages;
+        messages=[...messages, {username: data.senderName, message: data.message}]
+        this.state.messages = messages;
+        console.log(data);
+      }
+    })
+
     this.state.socket = socket;
   }
 
@@ -231,7 +233,8 @@ class App extends React.Component {
       socket: this.state.socket,
       username: this.state.username,
       channels: this.state.channels,
-      channel: ch
+      channel: ch,
+      messages: this.state.messages
     });
     this.socket.emit('channel-join', id, ack => {
       console.log("joined channel" + id);
@@ -240,15 +243,20 @@ class App extends React.Component {
 
   handleNameClick(name) {
     this.setState({
-      socket: this.state.socket,
-      username: name,
-      channels: this.state.channels,
-      channel: this.state.channel
+      "socket": this.state.socket,
+      "username": name,
+      "channels": this.state.channels,
+      "channel": this.state.channel,
+      "messages": this.state.messages,
     });
     console.log('Setting username: ' + name);
   }
 
   handleMessageClick(message) {
+    let messages = this.state.messages;
+    messages = [...messages, {username: "Me", "message": message}]
+    this.state.messages = messages;
+    console.log(this.state)
     this.state.socket.emit('send-message', {channel: this.state.channel, message: message, senderName: this.state.username })
     console.log('Message sent to the server');
   }
