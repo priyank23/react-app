@@ -68,9 +68,8 @@ class ChatBox extends React.Component {
         <Row><NameBox handleClick = {this.props.handleNameClick}/></Row>
         <Row>
           <ul className = 'chatbox' ref='scroll'>
-            {console.log("HErererea")}
             {this.props.messages.map((message, index) => 
-              <MessageBox key={index} message={message["message"]} appearance={message["username"] === "Me" ? 'left': 'right'}/>
+              <MessageBox key={index} message={message["message"]} username={message["username"]} appearance={message["username"] !== "Me" ? 'left': 'right'}/>
             )}
           </ul>
         </Row>
@@ -85,7 +84,8 @@ class MessageBox extends React.Component {
   render() {
     return (
       <li className={`message ${this.props.appearance} appeared` }>
-          <div className='textwrap'>
+          <div className='text_wrapper'>
+          <div className="username">{this.props.username}</div>
             <div className="text">{this.props.message}</div>
           </div>
       </li>
@@ -242,10 +242,6 @@ class App extends React.Component {
     this.loadChannels();
   }
 
-  // componentDidUpdate() {
-  //   this.loadChannels();
-  // }
-
   async loadChannels() {
     fetch('http://localhost:8000/getChannels').then(async response => {
       let data = await response.json();
@@ -272,6 +268,7 @@ class App extends React.Component {
         let messages = this.state.messages;
         messages=[...messages, {username: data.senderName, message: data.message}]
         this.state.messages = messages;
+        this.setState(this.state)
         console.log(data);
       }
     })
@@ -281,14 +278,17 @@ class App extends React.Component {
 
   handleChannelClick(id) {
     let ch = this.state.channels.find(c=> {
-      return c.id == id;
+      if (c.channelName === id) {
+        return true
+      }
     });
+    
     this.setState({
       socket: this.state.socket,
       username: this.state.username,
       channels: this.state.channels,
       channel: ch,
-      messages: this.state.messages
+      messages: []
     });
     this.state.socket.emit('channel-join', id, ack => {
       console.log("joined channel" + id);
@@ -310,7 +310,7 @@ class App extends React.Component {
     let messages = this.state.messages;
     messages = [...messages, {username: "Me", "message": message}]
     this.state.messages = messages;
-    console.log(this.state)
+    this.setState(this.state)
     this.state.socket.emit('send-message', {channel: this.state.channel, message: message, senderName: this.state.username })
     console.log('Message sent to the server');
   }
@@ -340,7 +340,7 @@ class App extends React.Component {
     })
     .then(
       result => {
-        if(result.status == "OK") console.log("Server udpated")
+        if(result.status === "OK") console.log("Server udpated")
         else console.log("Server updation failed")
       }
     )
