@@ -68,3 +68,8 @@
   height: 75vh;
   overflow: auto;
 }
+
+.channel-card{
+  max-width: 100%;
+  border-bottom: 1px solid rgb(89, 161, 29);
+}

@@ -2,7 +2,6 @@ const express = require('express')
 const app = express();
 const path = require('path');
 const cors = require('cors')
-app.use(cors())
 const http = require('http').createServer(app);
 const io = require('socket.io')(http, {
     cors: {
@@ -11,7 +10,11 @@ const io = require('socket.io')(http, {
     }
 })
 
-let channels = []
+app.use(cors())
+app.use(express.urlencoded());
+app.use(express.json());
+
+var channels = []
 
 // app.use(express.static(path.join(__dirname, '../ui/build')))
 
@@ -27,14 +30,22 @@ app.get('/getChannels', (req, res) => {
     })
 })
 
+app.post('/updateChannels', (req, res) => {
+    console.log('/updateChannels request received')
+    channels = req.body.channels
+    res.json({status: "OK"})
+    console.log(channels)
+})
+
 io.on('connect', (socket) => {
     let address = socket.handshake.address
-    console.log('New connection from ' + address)
+    let port = socket.request.connection.remotePort
+    console.log('New connection from ' + address + ":" + port)
 
     socket.emit('connection', null);
 
     socket.on('disconnect', () => {
-        console.log(address.address + ':' + address.port + ' Disconnected!!')
+        console.log(address + ':' + port + ' Disconnected!!')
     })
 
     socket.on('send-message', data => {
@@ -43,6 +54,10 @@ io.on('connect', (socket) => {
         console.log('User: '+ data.senderName);
         console.log('Message: '+ data.message);
         socket.broadcast.emit('message', data);
+    })
+
+    socket.on('channel-join', id => {
+        console.log('channel-join request')
     })
 })
 

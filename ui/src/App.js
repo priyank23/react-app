@@ -2,7 +2,7 @@ import React from 'react';
 import socketClient from 'socket.io-client';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.css';
-import {Button, InputGroup, FormControl, Col, Container, Row} from 'react-bootstrap';
+import {Button, Card, InputGroup, FormControl, Col, Container, Row} from 'react-bootstrap';
 const SERVER = 'http://localhost:8000/'
 
 class NameBox extends React.Component {
@@ -174,7 +174,7 @@ class Channels extends React.Component {
           <div style={{borderBottom: '1px solid rgb(89, 161, 29)'}}>
             <div className="d-inline text-dark" style={{backgroundColor: "#d9ffa4", margin: "10px 5px"}}>Channels</div>
           </div>
-        <ul>
+        <ul style={{padding:0}}>
             {this.props.channels.map((channel, index) => 
               <Channel key={index} handleChannelClick={this.props.handleChannelClick} channelName={channel["channelName"]} participants={channel["number_of_users"]}/>
             )}
@@ -195,15 +195,25 @@ class Channels extends React.Component {
 }
 
 class Channel extends React.Component {
+
+  constructor(props) {
+    super(props)
+    this.click = this.click.bind(this);
+  } 
+
   click () {
     this.props.handleChannelClick(this.props.channelName);
   }
+
   render() {
     return (
-      <div className = 'channel' onClick={this.click}> 
-        <div>{this.props.channelName}</div>
-        <span>{this.props.participants}</span>
-      </div>
+      <Card className="channel-card" onClick={this.click}>
+      <Card.Body>
+        <Card.Title>{this.props.channelName}</Card.Title>
+        <Card.Subtitle className="mb-2 text-muted">Participants: {this.props.participants}</Card.Subtitle>
+        {/* <Card.Link >Delete Group</Card.Link> */}
+      </Card.Body>
+    </Card>
     )
   }
 }
@@ -224,6 +234,7 @@ class App extends React.Component {
     this.handleNameClick = this.handleNameClick.bind(this);
     this.handleMessageClick = this.handleMessageClick.bind(this);
     this.createChannel = this.createChannel.bind(this)
+    this.updateServer = this.updateServer.bind(this)
   }
 
   componentDidMount() {
@@ -279,7 +290,7 @@ class App extends React.Component {
       channel: ch,
       messages: this.state.messages
     });
-    this.socket.emit('channel-join', id, ack => {
+    this.state.socket.emit('channel-join', id, ack => {
       console.log("joined channel" + id);
     })
   }
@@ -307,13 +318,32 @@ class App extends React.Component {
   createChannel(newChannel) {
     let channels = this.state.channels
     channels = [...channels, {channelName: newChannel, number_of_users: 0}]
-    this.setState({
-      "socket": this.state.socket,
-      "username": this.state.username,
-      "channels": channels,
-      "channel": this.state.channel,
-      "messages": this.state.messages,
-    });
+    this.state.channels = channels
+    this.setState(this.state)
+    this.updateServer()
+  }
+
+  deleteChannel(oldChannel) {
+    // to delete a channel 
+  }
+  
+  updateServer() {
+    fetch('http://localhost:8000/updateChannels', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({channels: this.state.channels})
+    })
+    .then(res => {
+      if(res.status >= 400) {
+        throw new Error("Bad response from server" + res.status)
+      } return res.json()
+    })
+    .then(
+      result => {
+        if(result.status == "OK") console.log("Server udpated")
+        else console.log("Server updation failed")
+      }
+    )
   }
 
   render() {
