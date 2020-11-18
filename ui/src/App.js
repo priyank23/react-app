@@ -3,7 +3,7 @@ import socketClient from 'socket.io-client';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.css';
 import {Button, InputGroup, FormControl, Col, Container, Row} from 'react-bootstrap';
-const SERVER = 'http://localhost:8000'
+const SERVER = 'http://localhost:8000/'
 
 class NameBox extends React.Component {
   constructor(props) {
@@ -143,6 +143,30 @@ class SendButton extends React.Component {
 }
 
 class Channels extends React.Component {
+
+  constructor(props) {
+    super(props);
+    this.newChannel = React.createRef();
+
+    this.createChannel = this.createChannel.bind(this);
+    this.handleKeyPress = this.handleKeyPress.bind(this);
+  
+  }
+   
+  createChannel() {
+    if(this.newChannel.current.value && this.newChannel.current.value !== "") {
+      this.props.createChannel(this.newChannel.current.value);
+      console.log('HERE');
+      this.newChannel.current.value = null;
+    }
+  }
+
+  handleKeyPress(e) {
+    if(e.key === "Enter") {
+      this.createChannel();
+    }
+  }
+
   render() {
     return(
       <div className="channelblock">
@@ -151,19 +175,18 @@ class Channels extends React.Component {
             <div className="d-inline text-dark" style={{backgroundColor: "#d9ffa4", margin: "10px 5px"}}>Channels</div>
           </div>
         <ul>
-            {/* this.props.channels.map((channel, index) => 
-              <Channel key={index} onClick={this.props.handleChannelClick} channelName={channel}/>
-            ) */}
+            {this.props.channels.map((channel, index) => 
+              <Channel key={index} handleChannelClick={this.props.handleChannelClick} channelName={channel["channelName"]} participants={channel["number_of_users"]}/>
+            )}
         </ul>
         </div>
-        <InputGroup className="mb-3" size='sm'>
+        <InputGroup className="mb-3" size='sm' onKeyPress={this.handleKeyPress}>
         <FormControl
           placeholder="Channel"
-          aria-label="newChannel"
-          aria-describedby="message"
+          ref = {this.newChannel}
         />
         <InputGroup.Append>
-          <Button variant="info">Create</Button>
+          <Button variant="info" onClick={this.createChannel}>Create</Button>
         </InputGroup.Append>
         </InputGroup>
       </div>
@@ -192,7 +215,7 @@ class App extends React.Component {
     this.state = {
       socket: null,
       username: null,
-      channels: null,
+      channels: [],
       channel: null,
       messages: []
     }
@@ -200,10 +223,30 @@ class App extends React.Component {
     this.handleChannelClick = this.handleChannelClick.bind(this);
     this.handleNameClick = this.handleNameClick.bind(this);
     this.handleMessageClick = this.handleMessageClick.bind(this);
+    this.createChannel = this.createChannel.bind(this)
   }
 
   componentDidMount() {
     this.configureSocket();
+    this.loadChannels();
+  }
+
+  // componentDidUpdate() {
+  //   this.loadChannels();
+  // }
+
+  async loadChannels() {
+    fetch('http://localhost:8000/getChannels').then(async response => {
+      let data = await response.json();
+      this.setState({
+        socket: this.state.socket,
+        username: this.state.username,
+        channels: data.channels,
+        channel: this.state.channel,
+        messages: this.state.messages
+      });
+      console.log(data.channels);
+    })
   }
 
   configureSocket() {
@@ -261,12 +304,24 @@ class App extends React.Component {
     console.log('Message sent to the server');
   }
 
+  createChannel(newChannel) {
+    let channels = this.state.channels
+    channels = [...channels, {channelName: newChannel, number_of_users: 0}]
+    this.setState({
+      "socket": this.state.socket,
+      "username": this.state.username,
+      "channels": channels,
+      "channel": this.state.channel,
+      "messages": this.state.messages,
+    });
+  }
+
   render() {
     return (
       <>
       <Container style={{margin: '0 0 0 0', maxWidth: '100%', minHeight: '100vh', overflow: 'hidden', padding: '10px'}}>
         <Row>
-          <Col style={{paddingRight: '0px'}}><Channels handleChannelClick={this.handleChannelClick}></Channels></Col>
+          <Col style={{paddingRight: '0px'}}><Channels createChannel={this.createChannel} channels={this.state.channels} handleChannelClick={this.handleChannelClick}></Channels></Col>
           <Col xs={9}><ChatBox handleNameClick= {this.handleNameClick} handleMessageClick={this.handleMessageClick} channel={this.state.channel} messages = {this.state.messages}></ChatBox></Col>
         </Row>
       </Container>

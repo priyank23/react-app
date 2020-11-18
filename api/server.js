@@ -1,7 +1,8 @@
 const express = require('express')
 const app = express();
 const path = require('path');
-
+const cors = require('cors')
+app.use(cors())
 const http = require('http').createServer(app);
 const io = require('socket.io')(http, {
     cors: {
@@ -10,6 +11,8 @@ const io = require('socket.io')(http, {
     }
 })
 
+let channels = []
+
 // app.use(express.static(path.join(__dirname, '../ui/build')))
 
 app.get('/', (req, res) => {
@@ -17,9 +20,16 @@ app.get('/', (req, res) => {
     console.log("Server called");
 })
 
+app.get('/getChannels', (req, res) => {
+    console.log('/getChannels request received')
+    res.json({
+        channels: channels
+    })
+})
+
 io.on('connect', (socket) => {
     let address = socket.handshake.address
-    console.log('New connection from ' + address.address + ":" + address.port)
+    console.log('New connection from ' + address)
 
     socket.emit('connection', null);
 
@@ -33,7 +43,7 @@ io.on('connect', (socket) => {
         console.log('User: '+ data.senderName);
         console.log('Message: '+ data.message);
         socket.broadcast.emit('message', data);
-    } )
+    })
 })
 
 http.listen(8000, () => {
