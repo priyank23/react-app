@@ -51,12 +51,28 @@ class NameBox extends React.Component {
 
 class ChatBox extends React.Component {
 
+  constructor(props) {
+    super(props);
+    this.scrollRef = React.createRef();
+  }
+  
+  componentDidMount() {
+    this.scrollToBottom();
+  }
+  
+  componentDidUpdate() {
+    this.scrollToBottom();
+  }
+
+  scrollToBottom() {
+    this.scrollRef.current.scrollTop = this.scrollRef.current.scrollHeight;
+  }
   render() {
     return (
       <Container className = 'chatwindow'>
         <Row><NameBox handleClick = {this.props.handleNameClick}/></Row>
         <Row>
-          <ul className = 'chatbox'>
+          <ul className = 'chatbox' ref={this.scrollRef}>
             {this.props.messages.map((message, index) => 
               <MessageBox key={index} message={message.message} username={message.username} appearance={message.socketid !== this.props.socketid ? 'left': 'right'}/>
             )}
@@ -235,13 +251,16 @@ class App extends React.Component {
   async loadChannels() {
     fetch('http://localhost:8000/getChannels').then(async response => {
       let data = await response.json();
-      this.setState({
-        socket: this.state.socket,
-        username: this.state.username,
-        channels: data.channels,
-        channel: this.state.channel,
-        messages: this.state.messages
-      });
+      if(data.channels.length != this.state.channels.length){
+        this.setState({
+          socket: this.state.socket,
+          username: this.state.username,
+          channels: data.channels,
+          channel: this.state.channel,
+          messages: this.state.messages
+        });
+        console.log('updating channels')
+      }
       // console.log(data.channels);
     })
   }
