@@ -54,18 +54,20 @@ class ChatBox extends React.Component {
   constructor(props) {
     super(props);
     this.scrollRef = React.createRef();
+    this.number_of_messages = 0;
+    
+    this.scrollToBottom = this.scrollToBottom.bind(this)
   }
   
   componentDidMount() {
-    this.scrollToBottom();
-  }
-  
-  componentDidUpdate() {
-    this.scrollToBottom();
+    setInterval(this.scrollToBottom, 100)
   }
 
   scrollToBottom() {
-    this.scrollRef.current.scrollTop = this.scrollRef.current.scrollHeight;
+    if(this.number_of_messages < this.props.messages.length) {
+      this.scrollRef.current.scrollTop = this.scrollRef.current.scrollHeight;
+      this.number_of_messages = this.props.messages.length
+    }
   }
   render() {
     return (
@@ -90,7 +92,7 @@ class MessageBox extends React.Component {
     return (
       <li className={`message ${this.props.appearance} appeared` }>
           <div className='text_wrapper'>
-            <div className="username">{this.props.username}</div>
+            <div className="username">{this.props.appearance === 'right' ? "You" : this.props.username}</div>
             <div className="text">{this.props.message}</div>
           </div>
       </li>
@@ -251,7 +253,7 @@ class App extends React.Component {
   async loadChannels() {
     fetch('http://localhost:8000/getChannels').then(async response => {
       let data = await response.json();
-      if(data.channels.length != this.state.channels.length){
+      if(data.channels != this.state.channels){
         this.setState({
           socket: this.state.socket,
           username: this.state.username,
