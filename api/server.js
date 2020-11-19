@@ -82,7 +82,6 @@ io.on('connect', (socket) => {
                 for(let i=0;i<c.participants.length; i++) {
                     io.to(c.participants[i].socketid).emit('message', {socketid: socket.id, username: data.senderName, message: data.message});
                 }
-                console.log(c.messages)
             }
         })
         console.log(channels)
