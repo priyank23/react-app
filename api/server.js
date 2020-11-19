@@ -22,6 +22,11 @@ var channels = []
 //     participants: [{
 //         socketid: "",
 //         username: ""
+//     }],
+//     messages: [{
+//         socketid: "",
+//         username: "",
+//         message: ""
 //     }]
 // }]
 // app.use(express.static(path.join(__dirname, '../ui/build')))
@@ -70,7 +75,17 @@ io.on('connect', (socket) => {
         console.log('Channel: '+ data.channel);
         console.log('User: '+ data.senderName);
         console.log('Message: '+ data.message);
-        socket.broadcast.emit('message', data);
+
+        channels.find((c, index)=> {
+            if(c.channelName === data.channel.channelName) {
+                c.messages.push({socketid: socket.id, username: data.senderName, message: data.message})
+                for(let i=0;i<c.participants.length; i++) {
+                    io.to(c.participants[i].socketid).emit('message', {socketid: socket.id, username: data.senderName, message: data.message});
+                }
+                console.log(c.messages)
+            }
+        })
+        console.log(channels)
     })
     socket.on('channel-join', ch => {
         channels.find((c, index)=> {

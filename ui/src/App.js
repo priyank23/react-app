@@ -14,10 +14,12 @@ class NameBox extends React.Component {
   }
 
   handleClick() {
-    if(this.name.current.value && this.name.current.value !== '') this.props.handleClick(this.name.current.value);
     var nickname = document.getElementById('name');
-    nickname.textContent = this.name.current.value;
-    this.name.current.value = "";
+    if(this.name.current.value && this.name.current.value !== '') {
+      this.props.handleClick(this.name.current.value);
+      nickname.textContent = this.name.current.value;
+    }
+    this.name.current.value = ''
   }
 
   handleKeyPress(e) {
@@ -49,27 +51,14 @@ class NameBox extends React.Component {
 
 class ChatBox extends React.Component {
 
-  scrollToBottom = () => {
-    var el = this.refs.scroll;
-    el.scrollTop = el.scrollHeight;
-  }
-
-  componentDidMount() {
-    this.scrollToBottom();
-  }
-
-  componentDidUpdate() {
-    this.scrollToBottom();
-  }
-
   render() {
     return (
       <Container className = 'chatwindow'>
         <Row><NameBox handleClick = {this.props.handleNameClick}/></Row>
         <Row>
-          <ul className = 'chatbox' ref='scroll'>
+          <ul className = 'chatbox'>
             {this.props.messages.map((message, index) => 
-              <MessageBox key={index} message={message["message"]} username={message["username"]} appearance={message["username"] !== "Me" ? 'left': 'right'}/>
+              <MessageBox key={index} message={message.message} username={message.username} appearance={message.socketid !== this.props.socketid ? 'left': 'right'}/>
             )}
           </ul>
         </Row>
@@ -85,7 +74,7 @@ class MessageBox extends React.Component {
     return (
       <li className={`message ${this.props.appearance} appeared` }>
           <div className='text_wrapper'>
-          <div className="username">{this.props.username}</div>
+            <div className="username">{this.props.username}</div>
             <div className="text">{this.props.message}</div>
           </div>
       </li>
@@ -235,11 +224,12 @@ class App extends React.Component {
     this.handleMessageClick = this.handleMessageClick.bind(this);
     this.createChannel = this.createChannel.bind(this)
     this.updateServer = this.updateServer.bind(this)
+
+    this.configureSocket();
   }
 
   componentDidMount() {
-    this.configureSocket();
-    this.intervalId = setInterval(this.loadChannels.bind(this), 2000)
+    this.intervalId = setInterval(this.loadChannels.bind(this), 1000)
   }
 
   async loadChannels() {
@@ -252,7 +242,7 @@ class App extends React.Component {
         channel: this.state.channel,
         messages: this.state.messages
       });
-      console.log(data.channels);
+      // console.log(data.channels);
     })
   }
 
@@ -268,13 +258,11 @@ class App extends React.Component {
     })
 
     socket.on('message', data => {
-      if(data.channel === this.state.channel) {    // checking of null channel to be added
-        let messages = this.state.messages;
-        messages=[...messages, {username: data.senderName, message: data.message}]
-        this.state.messages = messages;
-        this.setState(this.state)
-        console.log(data);
-      }
+      let messages = this.state.messages;
+      messages=[...messages, {socketid: data.socketid, username: data.username, message: data.message}]
+      this.state.messages = messages;
+      this.setState(this.state)
+      console.log(data);
     })
 
     this.state.socket = socket;
@@ -285,7 +273,8 @@ class App extends React.Component {
     channels = [...channels, {
       channelName: newChannel,
       number_of_users: 0,
-      participants: []
+      participants: [],
+      messages: []
     }]
     this.state.channels = channels
     this.setState(this.state)
@@ -293,6 +282,10 @@ class App extends React.Component {
   }
 
   handleChannelClick(id) {
+    if(this.state.username === null || this.state.username === "") {
+      alert('Enter a userame first');
+      return
+    }
     if(this.state.channel != null) {
       let channels = this.state.channels
       channels.find((c, index)=> {
@@ -304,6 +297,7 @@ class App extends React.Component {
       });
       this.state.channels = channels
       this.state.channel = null
+      this.state.messages = []
       this.setState(this.state);
     }
     let ch = this.state.channels.find(c=> {
@@ -319,7 +313,7 @@ class App extends React.Component {
       username: this.state.username,
       channels: this.state.channels,
       channel: ch,
-      messages: []
+      messages: ch.messages
     });
     this.updateServer();
     this.state.socket.emit('channel-join', ch, ack => {
@@ -339,10 +333,14 @@ class App extends React.Component {
   }
 
   handleMessageClick(message) {
-    let messages = this.state.messages;
-    messages = [...messages, {username: "Me", "message": message}]
-    this.state.messages = messages;
-    this.setState(this.state)
+    // let messages = this.state.messages;
+    // messages = [...messages, {socketid: this.state.socket.id, username: "Me", "message": message}]
+    // this.state.messages = messages;
+    // this.setState(this.state)
+    if(this.state.channel === null) {
+      alert('Join a channel')
+      return
+    }
     this.state.socket.emit('send-message', {channel: this.state.channel, message: message, senderName: this.state.username })
     console.log('Message sent to the server');
   }
@@ -376,7 +374,7 @@ class App extends React.Component {
       <Container style={{margin: '0 0 0 0', maxWidth: '100%', minHeight: '100vh', overflow: 'hidden', padding: '10px'}}>
         <Row>
           <Col style={{paddingRight: '0px'}}><Channels createChannel={this.createChannel} channels={this.state.channels} handleChannelClick={this.handleChannelClick}></Channels></Col>
-          <Col xs={9}><ChatBox handleNameClick= {this.handleNameClick} handleMessageClick={this.handleMessageClick} channel={this.state.channel} messages = {this.state.messages}></ChatBox></Col>
+          <Col xs={9}><ChatBox handleNameClick= {this.handleNameClick} handleMessageClick={this.handleMessageClick} socketid={this.state.socket.id} messages = {this.state.messages}></ChatBox></Col>
         </Row>
       </Container>
       </>
