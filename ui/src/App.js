@@ -239,7 +239,7 @@ class App extends React.Component {
 
   componentDidMount() {
     this.configureSocket();
-    this.loadChannels();
+    this.intervalId = setInterval(this.loadChannels.bind(this), 2000)
   }
 
   async loadChannels() {
@@ -254,6 +254,10 @@ class App extends React.Component {
       });
       console.log(data.channels);
     })
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.intervalId)
   }
 
   configureSocket() {
@@ -276,9 +280,36 @@ class App extends React.Component {
     this.state.socket = socket;
   }
 
+  createChannel(newChannel) {
+    let channels = this.state.channels
+    channels = [...channels, {
+      channelName: newChannel,
+      number_of_users: 0,
+      participants: []
+    }]
+    this.state.channels = channels
+    this.setState(this.state)
+    this.updateServer()
+  }
+
   handleChannelClick(id) {
+    if(this.state.channel != null) {
+      let channels = this.state.channels
+      channels.find((c, index)=> {
+        if (c.channelName === this.state.channel.channelName) {
+          c.number_of_users--
+          c.participants = c.participants.filter(p => p.socketid !== this.state.socket.id)
+          channels[index] = c
+        }
+      });
+      this.state.channels = channels
+      this.state.channel = null
+      this.setState(this.state);
+    }
     let ch = this.state.channels.find(c=> {
       if (c.channelName === id) {
+        c.number_of_users++
+        c.participants.push({socketid: this.state.socket.id, username: this.state.username});
         return true
       }
     });
@@ -290,8 +321,9 @@ class App extends React.Component {
       channel: ch,
       messages: []
     });
-    this.state.socket.emit('channel-join', id, ack => {
-      console.log("joined channel" + id);
+    this.updateServer();
+    this.state.socket.emit('channel-join', ch, ack => {
+      console.log("joined channel" + ch);
     })
   }
 
@@ -313,14 +345,6 @@ class App extends React.Component {
     this.setState(this.state)
     this.state.socket.emit('send-message', {channel: this.state.channel, message: message, senderName: this.state.username })
     console.log('Message sent to the server');
-  }
-
-  createChannel(newChannel) {
-    let channels = this.state.channels
-    channels = [...channels, {channelName: newChannel, number_of_users: 0}]
-    this.state.channels = channels
-    this.setState(this.state)
-    this.updateServer()
   }
 
   deleteChannel(oldChannel) {

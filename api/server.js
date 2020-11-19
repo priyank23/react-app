@@ -16,6 +16,14 @@ app.use(express.json());
 
 var channels = []
 
+// channels = [{
+//     channelName: "",
+//     number_of_users: 0,
+//     participants: [{
+//         socketid: "",
+//         username: ""
+//     }]
+// }]
 // app.use(express.static(path.join(__dirname, '../ui/build')))
 
 app.get('/', (req, res) => {
@@ -24,7 +32,7 @@ app.get('/', (req, res) => {
 })
 
 app.get('/getChannels', (req, res) => {
-    console.log('/getChannels request received')
+    // console.log('/getChannels request received')
     res.json({
         channels: channels
     })
@@ -45,6 +53,15 @@ io.on('connect', (socket) => {
     socket.emit('connection', null);
 
     socket.on('disconnect', () => {
+        channels.find((c, index)=> {
+            c.participants.find(p => {
+                if(p.socketid === socket.id) {
+                    c.number_of_users--
+                    c.participants = c.participants.filter(p => p.socketid !== socket.id)
+                    channels[index] = c
+                }
+            })
+        })
         console.log(address + ':' + port + ' Disconnected!!')
     })
 
@@ -55,9 +72,15 @@ io.on('connect', (socket) => {
         console.log('Message: '+ data.message);
         socket.broadcast.emit('message', data);
     })
+    socket.on('channel-join', ch => {
+        channels.find((c, index)=> {
+            if (c.channelName === ch.channelName) {
+                channels[index] = ch
+            }
+            console.log('channel-join request done')
+            return "OK"
+        });
 
-    socket.on('channel-join', id => {
-        console.log('channel-join request')
     })
 })
 
