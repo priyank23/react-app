@@ -1,9 +1,45 @@
 import React from 'react';
 import socketClient from 'socket.io-client';
 import './App.css';
+import './ToggleSwitch.scss';
 import 'bootstrap/dist/css/bootstrap.css';
-import {Button, Card, InputGroup, FormControl, Col, Container, Row} from 'react-bootstrap';
+import { Button, ButtonToolbar, Card, InputGroup, FormControl, Col, Container, Row, ToggleButton, ToggleButtonGroup, Navbar } from 'react-bootstrap';
 const SERVER = 'http://localhost:8000/'
+
+class ToggleSwitch extends React.Component {
+  render() {
+    return (
+      <div className="toggle-switch">
+        <input
+          type="checkbox"
+          className="toggle-switch-checkbox"
+          name={this.props.name}
+          id={this.props.name}
+        />
+        <label className="toggle-switch-label" htmlFor={this.props.name}>
+          <span className="toggle-switch-inner" />
+          <span className="toggle-switch-switch" />
+        </label>
+      </div>
+    );
+  }
+}
+
+class TopLabel extends React.Component {
+  render() {
+    return (
+      <Navbar>
+        <Navbar.Brand>Chat App</Navbar.Brand>
+        <Navbar.Toggle />
+        <Navbar.Collapse className="justify-content-end">
+          <Navbar.Text>
+            Broadcast: <ToggleSwitch name='broadcast' />
+          </Navbar.Text>
+        </Navbar.Collapse>
+      </Navbar>
+    )
+  }
+}
 
 class NameBox extends React.Component {
   constructor(props) {
@@ -15,7 +51,7 @@ class NameBox extends React.Component {
 
   handleClick() {
     var nickname = document.getElementById('name');
-    if(this.name.current.value && this.name.current.value !== '') {
+    if (this.name.current.value && this.name.current.value !== '') {
       this.props.handleClick(this.name.current.value);
       nickname.textContent = this.name.current.value;
     }
@@ -30,17 +66,17 @@ class NameBox extends React.Component {
 
   render() {
     return (
-      <div className='namebox' onKeyPress = {this.handleKeyPress} >
+      <div className='namebox' onKeyPress={this.handleKeyPress} >
         <InputGroup className="mb-3" size='sm'>
           <InputGroup.Prepend>
             <InputGroup.Text id='name'>No name specified yet</InputGroup.Text>
           </InputGroup.Prepend>
           <FormControl
             placeholder="Your name..."
-            ref = {this.name}
+            ref={this.name}
           />
           <InputGroup.Append>
-            <Button onClick = {this.handleClick} variant="info">OK</Button>
+            <Button onClick={this.handleClick} variant="info">OK</Button>
           </InputGroup.Append>
         </InputGroup>
       </div>
@@ -55,46 +91,46 @@ class ChatBox extends React.Component {
     super(props);
     this.scrollRef = React.createRef();
     this.number_of_messages = 0;
-    
+
     this.scrollToBottom = this.scrollToBottom.bind(this)
   }
-  
+
   componentDidMount() {
     setInterval(this.scrollToBottom, 100)
   }
 
   scrollToBottom() {
-    if(this.number_of_messages < this.props.messages.length) {
+    if (this.number_of_messages < this.props.messages.length) {
       this.scrollRef.current.scrollTop = this.scrollRef.current.scrollHeight;
       this.number_of_messages = this.props.messages.length
     }
   }
   render() {
     return (
-      <Container className = 'chatwindow'>
-        <Row><NameBox handleClick = {this.props.handleNameClick}/></Row>
+      <Container className='chatwindow'>
+        <Row><NameBox handleClick={this.props.handleNameClick} /></Row>
         <Row>
-          <ul className = 'chatbox' ref={this.scrollRef}>
-            {this.props.messages.map((message, index) => 
-              <MessageBox key={index} message={message.message} username={message.username} appearance={message.socketid !== this.props.socketid ? 'left': 'right'}/>
+          <ul className='chatbox' ref={this.scrollRef}>
+            {this.props.messages.map((message, index) =>
+              <MessageBox key={index} message={message.message} username={message.username} appearance={message.socketid !== this.props.socketid ? 'left' : 'right'} />
             )}
           </ul>
         </Row>
-        <Row><InputMessageBox handleClick = {this.props.handleMessageClick}/></Row>
+        <Row><InputMessageBox handleClick={this.props.handleMessageClick} /></Row>
       </Container>
     )
   }
 }
 
 class MessageBox extends React.Component {
-  
+
   render() {
     return (
-      <li className={`message ${this.props.appearance} appeared` }>
-          <div className='text_wrapper'>
-            <div className="username">{this.props.appearance === 'right' ? "You" : this.props.username}</div>
-            <div className="text">{this.props.message}</div>
-          </div>
+      <li className={`message ${this.props.appearance} appeared`}>
+        <div className='text_wrapper'>
+          <div className="username">{this.props.appearance === 'right' ? "You" : this.props.username}</div>
+          <div className="text">{this.props.message}</div>
+        </div>
       </li>
     )
   }
@@ -110,29 +146,29 @@ class InputMessageBox extends React.Component {
   }
 
   handleClick() {
-    if(this.message.current.value && this.message.current.value !== '')
-    this.props.handleClick(this.message.current.value);
+    if (this.message.current.value && this.message.current.value !== '')
+      this.props.handleClick(this.message.current.value);
     this.message.current.value = "";
   }
 
   handleKeyPress(e) {
-    if(e.key === 'Enter') {
+    if (e.key === 'Enter') {
       this.handleClick();
     }
   }
 
   render() {
     return (
-      <div className = 'inputmessagebox' onKeyPress = {this.handleKeyPress}>
+      <div className='inputmessagebox' onKeyPress={this.handleKeyPress}>
         <InputGroup className="mb-3" size='sm'>
-        <FormControl
-          placeholder="Type your messages here..."
-          ref={this.message}
-        />
-        <InputGroup.Append>
-          <Button variant="secondary">Choose file</Button>
-          <SendButton handleClick={this.handleClick}/>
-        </InputGroup.Append>
+          <FormControl
+            placeholder="Type your messages here..."
+            ref={this.message}
+          />
+          <InputGroup.Append>
+            <Button variant="secondary">Choose file</Button>
+            <SendButton handleClick={this.handleClick} />
+          </InputGroup.Append>
         </InputGroup>
       </div>
     )
@@ -157,11 +193,11 @@ class Channels extends React.Component {
 
     this.createChannel = this.createChannel.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
-  
+
   }
-   
+
   createChannel() {
-    if(this.newChannel.current.value && this.newChannel.current.value !== "") {
+    if (this.newChannel.current.value && this.newChannel.current.value !== "") {
       this.props.createChannel(this.newChannel.current.value);
       console.log('HERE');
       this.newChannel.current.value = null;
@@ -169,32 +205,32 @@ class Channels extends React.Component {
   }
 
   handleKeyPress(e) {
-    if(e.key === "Enter") {
+    if (e.key === "Enter") {
       this.createChannel();
     }
   }
 
   render() {
-    return(
+    return (
       <div className="channelblock">
         <div className='channellist'>
-          <div style={{borderBottom: '1px solid rgb(89, 161, 29)'}}>
-            <div className="d-inline text-dark" style={{backgroundColor: "#d9ffa4", margin: "10px 5px"}}>Channels</div>
+          <div style={{ borderBottom: '1px solid rgb(89, 161, 29)' }}>
+            <div className="d-inline text-dark" style={{ backgroundColor: "#d9ffa4", margin: "10px 5px" }}>Channels</div>
           </div>
-        <ul style={{padding:0}}>
-            {this.props.channels.map((channel, index) => 
-              <Channel key={index} handleChannelClick={this.props.handleChannelClick} channelName={channel["channelName"]} participants={channel["number_of_users"]}/>
+          <ul style={{ padding: 0 }}>
+            {this.props.channels.map((channel, index) =>
+              <Channel key={index} handleChannelClick={this.props.handleChannelClick} channelName={channel["channelName"]} participants={channel["number_of_users"]} />
             )}
-        </ul>
+          </ul>
         </div>
         <InputGroup className="mb-3" size='sm' onKeyPress={this.handleKeyPress}>
-        <FormControl
-          placeholder="Channel"
-          ref = {this.newChannel}
-        />
-        <InputGroup.Append>
-          <Button variant="info" onClick={this.createChannel}>Create</Button>
-        </InputGroup.Append>
+          <FormControl
+            placeholder="Channel"
+            ref={this.newChannel}
+          />
+          <InputGroup.Append>
+            <Button variant="info" onClick={this.createChannel}>Create</Button>
+          </InputGroup.Append>
         </InputGroup>
       </div>
     )
@@ -206,21 +242,21 @@ class Channel extends React.Component {
   constructor(props) {
     super(props)
     this.click = this.click.bind(this);
-  } 
+  }
 
-  click () {
+  click() {
     this.props.handleChannelClick(this.props.channelName);
   }
 
   render() {
     return (
       <Card className="channel-card" onClick={this.click}>
-      <Card.Body>
-        <Card.Title>{this.props.channelName}</Card.Title>
-        <Card.Subtitle className="mb-2 text-muted">Participants: {this.props.participants}</Card.Subtitle>
-        {/* <Card.Link >Delete Group</Card.Link> */}
-      </Card.Body>
-    </Card>
+        <Card.Body>
+          <Card.Title>{this.props.channelName}</Card.Title>
+          <Card.Subtitle className="mb-2 text-muted">Participants: {this.props.participants}</Card.Subtitle>
+          {/* <Card.Link >Delete Group</Card.Link> */}
+        </Card.Body>
+      </Card>
     )
   }
 }
@@ -242,6 +278,7 @@ class App extends React.Component {
     this.handleMessageClick = this.handleMessageClick.bind(this);
     this.createChannel = this.createChannel.bind(this)
     this.updateServer = this.updateServer.bind(this)
+    this.isBroadcast = this.isBroadcast.bind(this)
 
     this.configureSocket();
   }
@@ -253,7 +290,7 @@ class App extends React.Component {
   async loadChannels() {
     fetch('http://localhost:8000/getChannels').then(async response => {
       let data = await response.json();
-      if(data.channels != this.state.channels){
+      if (data.channels != this.state.channels) {
         this.setState({
           socket: this.state.socket,
           username: this.state.username,
@@ -261,9 +298,7 @@ class App extends React.Component {
           channel: this.state.channel,
           messages: this.state.messages
         });
-        console.log('updating channels')
       }
-      // console.log(data.channels);
     })
   }
 
@@ -274,13 +309,13 @@ class App extends React.Component {
   configureSocket() {
     console.log('Configuring Socket');
     let socket = socketClient(SERVER);
-    socket.on('connect' , () => {
+    socket.on('connect', () => {
       console.log('Connected with the server')
     })
 
     socket.on('message', data => {
       let messages = this.state.messages;
-      messages=[...messages, {socketid: data.socketid, username: data.username, message: data.message}]
+      messages = [...messages, { socketid: data.socketid, username: data.username, message: data.message }]
       this.state.messages = messages;
       this.setState(this.state)
       console.log(data);
@@ -303,13 +338,13 @@ class App extends React.Component {
   }
 
   handleChannelClick(id) {
-    if(this.state.username === null || this.state.username === "") {
+    if (this.state.username === null || this.state.username === "") {
       alert('Enter a userame first');
       return
     }
-    if(this.state.channel != null) {
+    if (this.state.channel != null) {
       let channels = this.state.channels
-      channels.find((c, index)=> {
+      channels.find((c, index) => {
         if (c.channelName === this.state.channel.channelName) {
           c.number_of_users--
           c.participants = c.participants.filter(p => p.socketid !== this.state.socket.id)
@@ -321,14 +356,14 @@ class App extends React.Component {
       this.state.messages = []
       this.setState(this.state);
     }
-    let ch = this.state.channels.find(c=> {
+    let ch = this.state.channels.find(c => {
       if (c.channelName === id) {
         c.number_of_users++
-        c.participants.push({socketid: this.state.socket.id, username: this.state.username});
+        c.participants.push({ socketid: this.state.socket.id, username: this.state.username });
         return true
       }
     });
-    
+
     this.setState({
       socket: this.state.socket,
       username: this.state.username,
@@ -358,48 +393,52 @@ class App extends React.Component {
     // messages = [...messages, {socketid: this.state.socket.id, username: "Me", "message": message}]
     // this.state.messages = messages;
     // this.setState(this.state)
-    if(this.state.channel === null) {
+    if (this.state.channel === null) {
       alert('Join a channel')
       return
     }
-    this.state.socket.emit('send-message', {channel: this.state.channel, message: message, senderName: this.state.username })
+    this.state.socket.emit('send-message', { channel: this.state.channel, message: message, senderName: this.state.username })
     console.log('Message sent to the server');
   }
 
   deleteChannel(oldChannel) {
     // to delete a channel 
   }
-  
+
   updateServer() {
     fetch('http://localhost:8000/updateChannels', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({channels: this.state.channels})
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ channels: this.state.channels })
     })
-    .then(res => {
-      if(res.status >= 400) {
-        throw new Error("Bad response from server" + res.status)
-      } return res.json()
-    })
-    .then(
-      result => {
-        if(result.status === "OK") console.log("Server udpated")
-        else console.log("Server updation failed")
-      }
-    )
+      .then(res => {
+        if (res.status >= 400) {
+          throw new Error("Bad response from server" + res.status)
+        } return res.json()
+      })
+      .then(
+        result => {
+          if (result.status === "OK") console.log("Server udpated")
+          else console.log("Server updation failed")
+        }
+      )
   }
 
+  isBroadcast() {
+
+  }
   render() {
     return (
       <>
-      <Container style={{margin: '0 0 0 0', maxWidth: '100%', minHeight: '100vh', overflow: 'hidden', padding: '10px'}}>
-        <Row>
-          <Col style={{paddingRight: '0px'}}><Channels createChannel={this.createChannel} channels={this.state.channels} handleChannelClick={this.handleChannelClick}></Channels></Col>
-          <Col xs={9}><ChatBox handleNameClick= {this.handleNameClick} handleMessageClick={this.handleMessageClick} socketid={this.state.socket.id} messages = {this.state.messages}></ChatBox></Col>
-        </Row>
-      </Container>
+        <TopLabel />
+        <Container style={{ margin: '0 0 0 0', maxWidth: '100vw', overflow: 'hidden', padding: '0px 10px' }}>
+          <Row>
+            <Col style={{ paddingRight: "0px", paddingBottom: "0px"}}><Channels createChannel={this.createChannel} channels={this.state.channels} handleChannelClick={this.handleChannelClick}></Channels></Col>
+            <Col xs={9}><ChatBox handleNameClick={this.handleNameClick} handleMessageClick={this.handleMessageClick} socketid={this.state.socket.id} messages={this.state.messages}></ChatBox></Col>
+          </Row>
+        </Container>
       </>
-    ) 
+    )
   }
 }
 
