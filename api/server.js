@@ -76,11 +76,18 @@ io.on('connect', (socket) => {
         console.log('User: '+ data.senderName);
         console.log('Message: '+ data.message);
 
+        toSend = {socketid: socket.id, username: data.senderName, message: data.message}
+        if(data.channel.channelName === "__broadcast") {
+            for(let i=0;i<channels.length; i++) {
+                channels[i].messages.push(toSend)
+            }
+            socket.emit('message', toSend)
+        }
         channels.find((c, index)=> {
             if(c.channelName === data.channel.channelName) {
-                c.messages.push({socketid: socket.id, username: data.senderName, message: data.message})
+                c.messages.push(toSend)
                 for(let i=0;i<c.participants.length; i++) {
-                    io.to(c.participants[i].socketid).emit('message', {socketid: socket.id, username: data.senderName, message: data.message});
+                    io.to(c.participants[i].socketid).emit('message', toSend);
                 }
             }
         })

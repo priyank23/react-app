@@ -3,10 +3,18 @@ import socketClient from 'socket.io-client';
 import './App.css';
 import './ToggleSwitch.scss';
 import 'bootstrap/dist/css/bootstrap.css';
-import { Button, ButtonToolbar, Card, InputGroup, FormControl, Col, Container, Row, ToggleButton, ToggleButtonGroup, Navbar } from 'react-bootstrap';
+import { Button, Card, InputGroup, FormControl, Col, Container, Row, Navbar } from 'react-bootstrap';
 const SERVER = 'http://localhost:8000/'
 
 class ToggleSwitch extends React.Component {
+
+  constructor(props) {
+    super(props);
+    this.handleChange = this.handleChange.bind(this)
+  }
+  handleChange(event) {
+    this.props.handleChange(event)
+  }
   render() {
     return (
       <div className="toggle-switch">
@@ -15,6 +23,7 @@ class ToggleSwitch extends React.Component {
           className="toggle-switch-checkbox"
           name={this.props.name}
           id={this.props.name}
+          onChange = {this.handleChange}
         />
         <label className="toggle-switch-label" htmlFor={this.props.name}>
           <span className="toggle-switch-inner" />
@@ -33,7 +42,7 @@ class TopLabel extends React.Component {
         <Navbar.Toggle />
         <Navbar.Collapse className="justify-content-end">
           <Navbar.Text>
-            Broadcast: <ToggleSwitch name='broadcast' />
+            Broadcast: <ToggleSwitch name='broadcast' handleChange = {this.props.handleChange} />
           </Navbar.Text>
         </Navbar.Collapse>
       </Navbar>
@@ -270,7 +279,8 @@ class App extends React.Component {
       username: null,
       channels: [],
       channel: null,
-      messages: []
+      messages: [],
+      isBroadcast: false
     }
 
     this.handleChannelClick = this.handleChannelClick.bind(this);
@@ -278,27 +288,21 @@ class App extends React.Component {
     this.handleMessageClick = this.handleMessageClick.bind(this);
     this.createChannel = this.createChannel.bind(this)
     this.updateServer = this.updateServer.bind(this)
-    this.isBroadcast = this.isBroadcast.bind(this)
+    this.handleBroadcastStatus = this.handleBroadcastStatus.bind(this)
 
     this.configureSocket();
   }
 
   componentDidMount() {
-    this.intervalId = setInterval(this.loadChannels.bind(this), 1000)
+    this.intervalId = setInterval(this.loadChannels.bind(this), 100)
   }
 
   async loadChannels() {
     fetch('http://localhost:8000/getChannels').then(async response => {
       let data = await response.json();
-      if (data.channels != this.state.channels) {
-        this.setState({
-          socket: this.state.socket,
-          username: this.state.username,
-          channels: data.channels,
-          channel: this.state.channel,
-          messages: this.state.messages
-        });
-      }
+      this.setState({
+        channels: data.channels
+      });
     })
   }
 
@@ -316,24 +320,32 @@ class App extends React.Component {
     socket.on('message', data => {
       let messages = this.state.messages;
       messages = [...messages, { socketid: data.socketid, username: data.username, message: data.message }]
-      this.state.messages = messages;
-      this.setState(this.state)
+      
+      this.setState({
+        socket: this.state.socket,
+        username: this.state.username,
+        channels: this.state.channels,
+        channel: this.state.channel,
+        messages: messages,
+        isBroadcast: this.state.isBroadcast
+      })
       console.log(data);
     })
 
-    this.state.socket = socket;
+    this.state.socket = socket
+    this.setState(this.state)
   }
 
   createChannel(newChannel) {
+    console.log(newChannel)
     let channels = this.state.channels
     channels = [...channels, {
       channelName: newChannel,
       number_of_users: 0,
       participants: [],
-      messages: []
+      messages: [],
     }]
     this.state.channels = channels
-    this.setState(this.state)
     this.updateServer()
   }
 
@@ -362,6 +374,7 @@ class App extends React.Component {
         c.participants.push({ socketid: this.state.socket.id, username: this.state.username });
         return true
       }
+      return false
     });
 
     this.setState({
@@ -393,11 +406,15 @@ class App extends React.Component {
     // messages = [...messages, {socketid: this.state.socket.id, username: "Me", "message": message}]
     // this.state.messages = messages;
     // this.setState(this.state)
-    if (this.state.channel === null) {
-      alert('Join a channel')
-      return
+    if(!this.state.isBroadcast) {
+      if (this.state.channel === null) {
+        alert('Join a channel')
+        return
+      }
+      this.state.socket.emit('send-message', { channel: this.state.channel, message: message, senderName: this.state.username })
+    } else {
+      this.state.socket.emit('send-message', { channel: {channelName: "__broadcast"}, message: message, senderName: this.state.username })
     }
-    this.state.socket.emit('send-message', { channel: this.state.channel, message: message, senderName: this.state.username })
     console.log('Message sent to the server');
   }
 
@@ -424,13 +441,14 @@ class App extends React.Component {
       )
   }
 
-  isBroadcast() {
-
+  handleBroadcastStatus(event) {
+    this.setState({isBroadcast: event.target.checked});
   }
+
   render() {
     return (
       <>
-        <TopLabel />
+        <TopLabel handleChange = {this.handleBroadcastStatus}/>
         <Container style={{ margin: '0 0 0 0', maxWidth: '100vw', overflow: 'hidden', padding: '0px 10px' }}>
           <Row>
             <Col style={{ paddingRight: "0px", paddingBottom: "0px"}}><Channels createChannel={this.createChannel} channels={this.state.channels} handleChannelClick={this.handleChannelClick}></Channels></Col>
