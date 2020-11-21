@@ -81,7 +81,7 @@ io.on('connect', (socket) => {
             for(let i=0;i<channels.length; i++) {
                 channels[i].messages.push(toSend)
             }
-            socket.emit('message', toSend)
+            io.emit('message', toSend)
         }
         channels.find((c, index)=> {
             if(c.channelName === data.channel.channelName) {

@@ -38,7 +38,7 @@
         box-sizing: border-box;
       }
       &:before {
-        content: "Yes";
+        content: "on";
         text-transform: uppercase;
         padding-left: 10px;
         background-color: #f90;
@@ -54,7 +54,7 @@
       }
     }
     &-inner:after {
-      content: "No";
+      content: "off";
       text-transform: uppercase;
       padding-right: 10px;
       background-color: #bbb;

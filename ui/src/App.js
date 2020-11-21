@@ -125,7 +125,7 @@ class ChatBox extends React.Component {
             )}
           </ul>
         </Row>
-        <Row><InputMessageBox handleClick={this.props.handleMessageClick} /></Row>
+        <Row><InputMessageBox handleClick={this.props.handleMessageClick} handleFileSelect={this.props.handleFileSelect} /></Row>
       </Container>
     )
   }
@@ -166,6 +166,12 @@ class InputMessageBox extends React.Component {
     }
   }
 
+  handleFileSelect(e) {
+    if(e.target.files[0]) {
+      this.props.handleFileSelect(e);
+    }
+  }
+
   render() {
     return (
       <div className='inputmessagebox' onKeyPress={this.handleKeyPress}>
@@ -175,7 +181,19 @@ class InputMessageBox extends React.Component {
             ref={this.message}
           />
           <InputGroup.Append>
-            <Button variant="secondary">Choose file</Button>
+            <Button variant="secondary">
+              <label htmlFor="files" style={{padding: "0px", margin: "0px"}}>
+                Choose file
+              </label>
+            </Button>
+            <input 
+              type="file"
+              id="files"
+              name="files"
+              style={{display: "none"}} 
+              onChange={(e) => this.handleFileSelect(e)} />
+          </InputGroup.Append>
+          <InputGroup.Append>
             <SendButton handleClick={this.handleClick} />
           </InputGroup.Append>
         </InputGroup>
@@ -289,6 +307,7 @@ class App extends React.Component {
     this.createChannel = this.createChannel.bind(this)
     this.updateServer = this.updateServer.bind(this)
     this.handleBroadcastStatus = this.handleBroadcastStatus.bind(this)
+    this.handleFileSelect = this.handleFileSelect.bind(this)
 
     this.configureSocket();
   }
@@ -402,10 +421,6 @@ class App extends React.Component {
   }
 
   handleMessageClick(message) {
-    // let messages = this.state.messages;
-    // messages = [...messages, {socketid: this.state.socket.id, username: "Me", "message": message}]
-    // this.state.messages = messages;
-    // this.setState(this.state)
     if(!this.state.isBroadcast) {
       if (this.state.channel === null) {
         alert('Join a channel')
@@ -445,6 +460,9 @@ class App extends React.Component {
     this.setState({isBroadcast: event.target.checked});
   }
 
+  handleFileSelect(event) {
+   // Handle File Sending thingy
+  }
   render() {
     return (
       <>
