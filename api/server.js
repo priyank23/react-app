@@ -1,6 +1,5 @@
 const express = require('express')
 const app = express();
-const path = require('path');
 const cors = require('cors')
 const http = require('http').createServer(app);
 const io = require('socket.io')(http, {
@@ -11,8 +10,8 @@ const io = require('socket.io')(http, {
 })
 
 app.use(cors())
-app.use(express.urlencoded());
-app.use(express.json());
+app.use(express.urlencoded({limit: '50mb'}));
+app.use(express.json({limit: '50mb'}));
 
 var channels = []
 
@@ -37,7 +36,6 @@ app.get('/', (req, res) => {
 })
 
 app.get('/getChannels', (req, res) => {
-    // console.log('/getChannels request received')
     res.json({
         channels: channels
     })
@@ -75,7 +73,7 @@ io.on('connect', (socket) => {
         console.log('Channel: '+ data.channel);
         console.log('User: '+ data.senderName);
         console.log('Message: '+ data.message);
-        if(data.isFileAttached) console.log('Attached file: '+ data.file);
+        if(data.isFileAttached) console.log(data.file);
 
         toSend = {socketid: socket.id, username: data.senderName, message: data.message, isFileAttached: data.isFileAttached, file: data.file}
         if(data.channel.channelName === "__broadcast") {

@@ -6,6 +6,10 @@ import 'bootstrap/dist/css/bootstrap.css';
 import { Button, Card, InputGroup, FormControl, Col, Container, Row, Navbar } from 'react-bootstrap';
 const SERVER = 'http://localhost:8000/'
 
+/*
+@author: Priyank Lohariwal
+*/
+
 class ToggleSwitch extends React.Component {
 
   constructor(props) {
@@ -104,16 +108,16 @@ class ChatBox extends React.Component {
     this.scrollToBottom = this.scrollToBottom.bind(this)
   }
 
-  componentDidMount() {
-    setInterval(this.scrollToBottom, 100)
+  componentDidUpdate() {
+    this.scrollToBottom()
   }
-
   scrollToBottom() {
     if (this.number_of_messages < this.props.messages.length) {
       this.scrollRef.current.scrollTop = this.scrollRef.current.scrollHeight;
       this.number_of_messages = this.props.messages.length
     }
   }
+
   render() {
     return (
       <Container className='chatwindow'>
@@ -121,7 +125,7 @@ class ChatBox extends React.Component {
         <Row>
           <ul className='chatbox' ref={this.scrollRef}>
             {this.props.messages.map((message, index) =>
-              <MessageBox key={index} message={message.message} username={message.username} appearance={message.socketid !== this.props.socketid ? 'left' : 'right'} />
+              <MessageBox key={index} message={message.message} username={message.username} file={message.file} appearance={message.socketid !== this.props.socketid ? 'left' : 'right'} />
             )}
           </ul>
         </Row>
@@ -133,13 +137,29 @@ class ChatBox extends React.Component {
 
 class MessageBox extends React.Component {
 
+  constructor(props) {
+    super(props)
+    this.toBase64 =this.toBase64.bind(this)
+  }
+
+  toBase64(arr) {
+    if(arr.data) {
+      return btoa(
+        arr.data.reduce((data, byte) => data + String.fromCharCode(byte), '')
+      )
+    } else {
+      console.log('Error')
+    }
+  } 
+
   render() {
     return (
       <li className={`message ${this.props.appearance} appeared`}>
         <div className='text_wrapper'>
           <div className="username">{this.props.appearance === 'right' ? "You" : this.props.username}</div>
           <div className="text">{this.props.message}</div>
-          {/* <div className="file">{this.props.file}</div> */}
+          {console.log(this.props.file)}
+          {this.props.file? <img style={{height:"10em", maxWidth: "20em"}} src={this.props.file.data? "data:image/png;base64," + this.toBase64(this.props.file) : URL.createObjectURL(new Blob([this.props.file]))}/> : null}
         </div>
       </li>
     )
