@@ -75,15 +75,16 @@ io.on('connect', (socket) => {
         console.log('Channel: '+ data.channel);
         console.log('User: '+ data.senderName);
         console.log('Message: '+ data.message);
+        if(data.isFileAttached) console.log('Attached file: '+ data.file);
 
-        toSend = {socketid: socket.id, username: data.senderName, message: data.message}
+        toSend = {socketid: socket.id, username: data.senderName, message: data.message, isFileAttached: data.isFileAttached, file: data.file}
         if(data.channel.channelName === "__broadcast") {
             for(let i=0;i<channels.length; i++) {
                 channels[i].messages.push(toSend)
             }
             io.emit('message', toSend)
         }
-        channels.find((c, index)=> {
+        channels.find(c=> {
             if(c.channelName === data.channel.channelName) {
                 c.messages.push(toSend)
                 for(let i=0;i<c.participants.length; i++) {

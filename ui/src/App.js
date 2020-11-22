@@ -139,6 +139,7 @@ class MessageBox extends React.Component {
         <div className='text_wrapper'>
           <div className="username">{this.props.appearance === 'right' ? "You" : this.props.username}</div>
           <div className="text">{this.props.message}</div>
+          {/* <div className="file">{this.props.file}</div> */}
         </div>
       </li>
     )
@@ -298,7 +299,9 @@ class App extends React.Component {
       channels: [],
       channel: null,
       messages: [],
-      isBroadcast: false
+      isBroadcast: false,
+      isFileAttached: false,
+      file: null
     }
 
     this.handleChannelClick = this.handleChannelClick.bind(this);
@@ -338,7 +341,7 @@ class App extends React.Component {
 
     socket.on('message', data => {
       let messages = this.state.messages;
-      messages = [...messages, { socketid: data.socketid, username: data.username, message: data.message }]
+      messages = [...messages, { socketid: data.socketid, username: data.username, message: data.message, isFileAttached: data.isFileAttached, file: data.file }]
       
       this.setState({
         socket: this.state.socket,
@@ -346,9 +349,12 @@ class App extends React.Component {
         channels: this.state.channels,
         channel: this.state.channel,
         messages: messages,
-        isBroadcast: this.state.isBroadcast
+        isBroadcast: this.state.isBroadcast,
+        isFileAttached: this.state.isFileAttached,
+        file: this.state.file
       })
       console.log(data);
+      console.log(data.file)
     })
 
     this.state.socket = socket
@@ -426,10 +432,14 @@ class App extends React.Component {
         alert('Join a channel')
         return
       }
-      this.state.socket.emit('send-message', { channel: this.state.channel, message: message, senderName: this.state.username })
+      this.state.socket.emit('send-message', { channel: this.state.channel, message: message, senderName: this.state.username, isFileAttached: this.state.isFileAttached, file: this.state.file })
     } else {
-      this.state.socket.emit('send-message', { channel: {channelName: "__broadcast"}, message: message, senderName: this.state.username })
+      this.state.socket.emit('send-message', { channel: {channelName: "__broadcast"}, message: message, senderName: this.state.username, isFileAttached: this.state.isFileAttached, file: this.state.file })
     }
+    this.setState({
+      isFileAttached: false,
+      file: null
+    })
     console.log('Message sent to the server');
   }
 
@@ -461,7 +471,11 @@ class App extends React.Component {
   }
 
   handleFileSelect(event) {
-   // Handle File Sending thingy
+    this.setState({
+      isFileAttached: true,
+      file: event.target.files[0]
+    })
+    console.log('[handleFileSelect] '+ event.target.files[0])
   }
   render() {
     return (
@@ -470,7 +484,7 @@ class App extends React.Component {
         <Container style={{ margin: '0 0 0 0', maxWidth: '100vw', overflow: 'hidden', padding: '0px 10px' }}>
           <Row>
             <Col style={{ paddingRight: "0px", paddingBottom: "0px"}}><Channels createChannel={this.createChannel} channels={this.state.channels} handleChannelClick={this.handleChannelClick}></Channels></Col>
-            <Col xs={9}><ChatBox handleNameClick={this.handleNameClick} handleMessageClick={this.handleMessageClick} socketid={this.state.socket.id} messages={this.state.messages}></ChatBox></Col>
+            <Col xs={9}><ChatBox handleNameClick={this.handleNameClick} handleMessageClick={this.handleMessageClick} handleFileSelect={this.handleFileSelect} socketid={this.state.socket.id} messages={this.state.messages}></ChatBox></Col>
           </Row>
         </Container>
       </>
