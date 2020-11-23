@@ -3,7 +3,7 @@ import socketClient from 'socket.io-client';
 import './App.css';
 import './ToggleSwitch.scss';
 import 'bootstrap/dist/css/bootstrap.css';
-import { Button, Card, InputGroup, FormControl, Col, Container, Row, Navbar } from 'react-bootstrap';
+import { Button, Card, DropdownButton, Dropdown, ButtonGroup, InputGroup, FormControl, Col, Container, Row, Modal, Navbar } from 'react-bootstrap';
 const SERVER = 'http://localhost:8000/'
 
 /*
@@ -262,12 +262,12 @@ class Channels extends React.Component {
     return (
       <div className="channelblock">
         <div className='channellist'>
-          <div style={{ borderBottom: '1px solid rgb(89, 161, 29)' }}>
-            <div className="d-inline text-dark" style={{ backgroundColor: "#d9ffa4", margin: "10px 5px" }}>Channels</div>
+          <div style={{ borderBottom: '1px solid rgb(163, 163, 163)' }}>
+            <div className="d-inline text-dark" style={{ margin: "10px 5px" }}>Channels</div>
           </div>
           <ul style={{ padding: 0 }}>
             {this.props.channels.map((channel, index) =>
-              <Channel key={index} handleChannelClick={this.props.handleChannelClick} channelName={channel["channelName"]} participants={channel["number_of_users"]} />
+              <Channel key={index} handleChannelClick={this.props.handleChannelClick} isSelected={channel.channelName !== this.props.joinedChannel? false: true} channelName={channel["channelName"]} participants={channel["participants"]} number_of_users={channel["number_of_users"]} />
             )}
           </ul>
         </div>
@@ -289,22 +289,64 @@ class Channel extends React.Component {
 
   constructor(props) {
     super(props)
+
+    this.state = {
+      showDialog: false
+    }
+
     this.click = this.click.bind(this);
+    this.handleClose = this.handleClose.bind(this);
+    this.handleOpen = this.handleOpen.bind(this)
   }
 
   click() {
     this.props.handleChannelClick(this.props.channelName);
   }
 
+  handleClose() {
+    this.setState({showDialog: false})
+  }
+
+  handleOpen() {
+    this.setState({showDialog: true})
+  }
+
   render() {
     return (
-      <Card className="channel-card" onClick={this.click}>
-        <Card.Body>
-          <Card.Title>{this.props.channelName}</Card.Title>
-          <Card.Subtitle className="mb-2 text-muted">Participants: {this.props.participants}</Card.Subtitle>
+      <>
+      <Card className="channel-card">
+        <Card.Body className={`${this.props.isSelected? 'selected': ''}`}>
+          <Card.Title >
+            {this.props.channelName}
+          <DropdownButton variant="secondary" size="sm" style={{float: "right"}} as={ButtonGroup} title="" id="bg-nested-dropdown">
+            <Dropdown.Item eventKey="3" onClick={this.click}>Join</Dropdown.Item>
+            <Dropdown.Item eventKey="1" onClick={this.handleOpen}>View</Dropdown.Item>
+            <Dropdown.Item eventKey="2">Delete</Dropdown.Item>
+          </DropdownButton>
+          </Card.Title>
+          
+          <Card.Subtitle className="mb-2 text-muted">Participants: {this.props.number_of_users}</Card.Subtitle>
           {/* <Card.Link >Delete Group</Card.Link> */}
         </Card.Body>
       </Card>
+      <Modal show={this.state.showDialog} onHide={this.handleClose} centered>
+      <Modal.Header closeButton>
+        <Modal.Title>{this.props.channelName}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <ul style={{ padding: 0 }}>
+            {this.props.participants.map(p =>
+              <p>{"User: "+ p.username}</p>
+            )}
+          </ul>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="primary" onClick={this.handleClose}>
+          Close
+        </Button>
+      </Modal.Footer>
+    </Modal>
+    </>
     )
   }
 }
@@ -503,7 +545,7 @@ class App extends React.Component {
         <TopLabel handleChange = {this.handleBroadcastStatus}/>
         <Container style={{ margin: '0 0 0 0', maxWidth: '100vw', overflow: 'hidden', padding: '0px 10px' }}>
           <Row>
-            <Col style={{ paddingRight: "0px", paddingBottom: "0px"}}><Channels createChannel={this.createChannel} channels={this.state.channels} handleChannelClick={this.handleChannelClick}></Channels></Col>
+            <Col style={{ paddingRight: "0px", paddingBottom: "0px"}}><Channels createChannel={this.createChannel} channels={this.state.channels} joinedChannel={this.state.channel? this.state.channel.channelName: null} handleChannelClick={this.handleChannelClick}></Channels></Col>
             <Col xs={9}><ChatBox handleNameClick={this.handleNameClick} handleMessageClick={this.handleMessageClick} handleFileSelect={this.handleFileSelect} socketid={this.state.socket.id} messages={this.state.messages}></ChatBox></Col>
           </Row>
         </Container>

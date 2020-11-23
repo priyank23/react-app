@@ -9,9 +9,9 @@
   min-height: 100%;
 }
 .channelblock .channellist {
-  background-color: #d9ffa4;
+  background-color: #fff;
   min-width: 30%;
-  border: 1px solid rgb(89, 161, 29);
+  border: 1px solid rgb(163, 163, 163);
   border-radius: 2px;
   max-height: 100%;
   height: 80vh;
@@ -19,26 +19,15 @@
   margin-bottom: 10px;
 }
 
-.channel-item {
-  border-bottom: 1px solid rgb(89, 161, 29);
-  padding: 10px;
-  font-weight: bold;
-}
-
-.channel-item:hover {
-  background-color: rgb(212, 155, 155);
-  cursor: pointer;
-}
-
 .namebox {
-  background-color: #d9ffa4;
+  background-color: #fff;
   width: 100%;
   padding: 0px 5px 0px 5px;
-  border-bottom: 1px solid rgb(89, 161, 29);
+  border-bottom: 1px solid rgb(163, 163, 163);
 }
 
 .chatwindow {
-  background-color: #d7ff9f;
+  background-color: #fff;
   width: 70%;
   border-radius: 2px;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
@@ -46,19 +35,19 @@
   height: 100%;
   padding-top: 5px;
   margin:0;
-  border: 1px solid rgb(89, 161, 29);
+  border: 1px solid rgb(163, 163, 163);
 }
 
 .inputmessagebox {
   position: relative;
   width: 100%;
-  background-color: #d8ffa4;
+  background-color: #fff;
   padding: 5px 5px;
-  border-top: 1px solid rgb(89, 161, 29);
+  border-top: 1px solid rgb(163, 163, 163);
 }
 
 .chatbox {
-  background-color: #d9ffa4;
+  background-color:#fff;
   background-size: cover;
   position: block;
   list-style: none;
@@ -71,9 +60,16 @@
 
 .channel-card{
   max-width: 100%;
-  border-bottom: 1px solid rgb(89, 161, 29);
+  border-bottom: 1px solid rgb(163, 163, 163);
 }
 
+.channel-card:hover {
+  cursor: pointer;
+  background-color: rgb(180, 180, 180);
+}
+.selected {
+  background-color: rgb(180, 180, 180);
+}
 
 .message {
   clear: both;
