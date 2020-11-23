@@ -157,8 +157,7 @@ class MessageBox extends React.Component {
       <li className={`message ${this.props.appearance} appeared`}>
         <div className='text_wrapper'>
           <div className="username">{this.props.appearance === 'right' ? "You" : this.props.username}</div>
-          <div className="text">{this.props.message}</div>
-          {console.log(this.props.file)}
+          {this.props.message? <div className="text">{this.props.message}</div>: null}
           {this.props.file? <img style={{height:"10em", maxWidth: "20em"}} src={this.props.file.data? "data:image/png;base64," + this.toBase64(this.props.file) : URL.createObjectURL(new Blob([this.props.file]))}/> : null}
         </div>
       </li>
@@ -173,12 +172,19 @@ class InputMessageBox extends React.Component {
 
     this.handleClick = this.handleClick.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
+    this.state = {
+      fileSelected: false
+    }
   }
 
   handleClick() {
     if (this.message.current.value && this.message.current.value !== '')
       this.props.handleClick(this.message.current.value);
-    this.message.current.value = "";
+    else if(this.state.fileSelected) {
+      this.props.handleClick(null)
+      this.setState({fileSelected: false})
+    }
+    this.message.current.value = null;
   }
 
   handleKeyPress(e) {
@@ -190,6 +196,7 @@ class InputMessageBox extends React.Component {
   handleFileSelect(e) {
     if(e.target.files[0]) {
       this.props.handleFileSelect(e);
+      this.setState({fileSelected: true})
     }
   }
 
