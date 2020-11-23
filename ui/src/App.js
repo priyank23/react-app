@@ -274,7 +274,7 @@ class Channels extends React.Component {
           </div>
           <ul style={{ padding: 0 }}>
             {this.props.channels.map((channel, index) =>
-              <Channel key={index} handleChannelClick={this.props.handleChannelClick} isSelected={channel.channelName !== this.props.joinedChannel? false: true} channelName={channel["channelName"]} participants={channel["participants"]} number_of_users={channel["number_of_users"]} />
+              <Channel key={index} handleChannelClick={this.props.handleChannelClick} deleteChannel={this.props.deleteChannel} isSelected={channel.channelName !== this.props.joinedChannel? false: true} channelName={channel["channelName"]} participants={channel["participants"]} number_of_users={channel["number_of_users"]} />
             )}
           </ul>
         </div>
@@ -304,6 +304,7 @@ class Channel extends React.Component {
     this.click = this.click.bind(this);
     this.handleClose = this.handleClose.bind(this);
     this.handleOpen = this.handleOpen.bind(this)
+    this.deleteChannel = this.deleteChannel.bind(this)
   }
 
   click() {
@@ -318,6 +319,10 @@ class Channel extends React.Component {
     this.setState({showDialog: true})
   }
 
+  deleteChannel() {
+    this.props.deleteChannel(this.props.channelName)
+  }
+
   render() {
     return (
       <>
@@ -328,7 +333,7 @@ class Channel extends React.Component {
           <DropdownButton variant="secondary" size="sm" style={{float: "right"}} as={ButtonGroup} title="" id="bg-nested-dropdown">
             <Dropdown.Item eventKey="3" onClick={this.click}>Join</Dropdown.Item>
             <Dropdown.Item eventKey="1" onClick={this.handleOpen}>View</Dropdown.Item>
-            <Dropdown.Item eventKey="2">Delete</Dropdown.Item>
+            <Dropdown.Item eventKey="2" onClick={this.deleteChannel}>Delete</Dropdown.Item>
           </DropdownButton>
           </Card.Title>
           
@@ -380,6 +385,7 @@ class App extends React.Component {
     this.updateServer = this.updateServer.bind(this)
     this.handleBroadcastStatus = this.handleBroadcastStatus.bind(this)
     this.handleFileSelect = this.handleFileSelect.bind(this)
+    this.deleteChannel = this.deleteChannel.bind(this)
 
     this.configureSocket();
   }
@@ -513,7 +519,33 @@ class App extends React.Component {
   }
 
   deleteChannel(oldChannel) {
-    // to delete a channel 
+    let ch = this.state.channels.find(c => {
+      if(c.channelName === oldChannel) {
+        if(this.state.channel && this.state.channel.channelName === oldChannel) {
+          if(c.number_of_users > 1) {
+            alert('You are not alone in the channel.')
+            return false
+          } else {
+            console.log('[deleteChannel] '+ oldChannel)
+            let channels = this.state.channels.filter(ch => ch.channelName !== oldChannel)
+            this.state.channels = channels
+            this.setState(this.state)
+            this.updateServer()
+          }
+        } else if(c.number_of_users>0) {
+          alert('There are people in there. Let them chat!!')
+          return false
+        } else {
+          console.log('[deleteChannel] '+ oldChannel)
+          let channels = this.state.channels.filter(ch => ch.channelName !== oldChannel)
+          this.state.channels = channels
+          this.setState(this.state)
+          this.updateServer()
+        }
+        return true
+      }
+      return false
+    })
   }
 
   updateServer() {
@@ -552,7 +584,7 @@ class App extends React.Component {
         <TopLabel handleChange = {this.handleBroadcastStatus}/>
         <Container style={{ margin: '0 0 0 0', maxWidth: '100vw', overflow: 'hidden', padding: '0px 10px' }}>
           <Row>
-            <Col style={{ paddingRight: "0px", paddingBottom: "0px"}}><Channels createChannel={this.createChannel} channels={this.state.channels} joinedChannel={this.state.channel? this.state.channel.channelName: null} handleChannelClick={this.handleChannelClick}></Channels></Col>
+            <Col style={{ paddingRight: "0px", paddingBottom: "0px"}}><Channels createChannel={this.createChannel} deleteChannel={this.deleteChannel} channels={this.state.channels} joinedChannel={this.state.channel? this.state.channel.channelName: null} handleChannelClick={this.handleChannelClick}></Channels></Col>
             <Col xs={9}><ChatBox handleNameClick={this.handleNameClick} handleMessageClick={this.handleMessageClick} handleFileSelect={this.handleFileSelect} socketid={this.state.socket.id} messages={this.state.messages}></ChatBox></Col>
           </Row>
         </Container>
