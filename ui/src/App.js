@@ -3,7 +3,7 @@ import socketClient from 'socket.io-client';
 import './App.css';
 import './ToggleSwitch.scss';
 import 'bootstrap/dist/css/bootstrap.css';
-import { Button, Card, DropdownButton, Dropdown, ButtonGroup, InputGroup, FormControl, Col, Container, Row, Modal, Navbar } from 'react-bootstrap';
+import { Button, Card, DropdownButton, Dropdown, ButtonGroup, InputGroup, Form, FormControl, Col, Container, Row, Modal, Navbar } from 'react-bootstrap';
 const SERVER = 'http://localhost:8000/'
 
 /*
@@ -96,7 +96,6 @@ class NameBox extends React.Component {
     )
   }
 }
-
 
 class ChatBox extends React.Component {
 
@@ -244,6 +243,9 @@ class Channels extends React.Component {
 
   constructor(props) {
     super(props);
+    this.state={
+      showForm: false
+    }
     this.newChannel = React.createRef();
 
     this.createChannel = this.createChannel.bind(this);
@@ -252,9 +254,10 @@ class Channels extends React.Component {
   }
 
   createChannel() {
+    // this.state.showForm = true
+    // this.setState(this.state)
     if (this.newChannel.current.value && this.newChannel.current.value !== "") {
       this.props.createChannel(this.newChannel.current.value);
-      console.log('HERE');
       this.newChannel.current.value = null;
     }
   }
@@ -284,9 +287,11 @@ class Channels extends React.Component {
             ref={this.newChannel}
           />
           <InputGroup.Append>
-            <Button variant="info" onClick={this.createChannel}>Create</Button>
+            <Button variant="info" onClick={() => {this.setState({showForm: true})}}>Create</Button>
+            {this.state.showForm && <ChannelForm show={this.state.showForm}/>}
           </InputGroup.Append>
         </InputGroup>
+        
       </div>
     )
   }
@@ -363,6 +368,56 @@ class Channel extends React.Component {
   }
 }
 
+class ChannelForm extends React.Component {
+  
+  constructor(props) {
+    super(props)
+    this.state={
+      showDialog: this.props.show,
+      showPasswordInput: false
+    }
+    this.name = React.createRef()
+    this.password = React.createRef()
+  }
+
+  render() {
+    return(
+      <>
+      {console.log(this.state.showDialog)}
+      <Modal show={this.state.showDialog} onHide={() => {this.setState({showDialog: false})}} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Create Channel</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group controlId="channelName">
+              <Form.Label>Name</Form.Label>
+              <Form.Control ref={this.name} type="text" placeholder="Enter channel name"/>
+            </Form.Group>
+            <Form.Group controlId="channelType">
+              <div key="inline-checkbox" className="mb-3">
+                <Form.Check inline label="public" type='checkbox' id="publicChannel" />
+                <Form.Check inline label="private" type='checkbox' id="privateChannel" onChange={(e)=> {this.setState({showPasswordInput: e.target.checked})}}/>
+              </div>
+            </Form.Group>
+            {this.state.showPasswordInput &&
+              <Form.Group controlId="password">
+              <Form.Label>Password</Form.Label>
+              <Form.Control ref={this.password} type="text" placeholder="Enter password" required/>
+            </Form.Group>}
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="primary" onClick={() => {this.setState({showDialog: false})}}>
+            Create
+          </Button>
+        </Modal.Footer>
+      </Modal>
+      </>
+    )
+  }
+}
+
 class App extends React.Component {
 
   constructor(props) {
@@ -386,12 +441,13 @@ class App extends React.Component {
     this.handleBroadcastStatus = this.handleBroadcastStatus.bind(this)
     this.handleFileSelect = this.handleFileSelect.bind(this)
     this.deleteChannel = this.deleteChannel.bind(this)
+    this.loadChannels = this.loadChannels.bind(this)
 
     this.configureSocket();
   }
 
   componentDidMount() {
-    this.intervalId = setInterval(this.loadChannels.bind(this), 100)
+    this.loadChannels()
   }
 
   async loadChannels() {
@@ -403,9 +459,9 @@ class App extends React.Component {
     })
   }
 
-  componentWillUnmount() {
-    clearInterval(this.intervalId)
-  }
+  // componentWillUnmount() {
+  //   clearInterval(this.intervalId)
+  // }
 
   configureSocket() {
     console.log('Configuring Socket');
@@ -432,6 +488,12 @@ class App extends React.Component {
       console.log(data.file)
     })
 
+    socket.on('updateChannel', data => {
+      this.setState({
+        channels: data
+      })
+    })
+
     this.state.socket = socket
     this.setState(this.state)
   }
@@ -439,6 +501,11 @@ class App extends React.Component {
   createChannel(newChannel) {
     console.log(newChannel)
     let channels = this.state.channels
+    if(channels.find(ch=> ch.channelName === newChannel)) {
+      alert('Channel name already exists')
+      return
+    }
+    console.log('[createChannel] '+ newChannel)
     channels = [...channels, {
       channelName: newChannel,
       number_of_users: 0,

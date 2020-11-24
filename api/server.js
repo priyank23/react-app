@@ -46,6 +46,7 @@ app.post('/updateChannels', (req, res) => {
     channels = req.body.channels
     res.json({status: "OK"})
     console.log(channels)
+    io.emit('updateChannel', channels)
 })
 
 io.on('connect', (socket) => {
