@@ -521,6 +521,12 @@ class App extends React.Component {
       })
     })
 
+    socket.on('messages', data => {
+      this.setState({
+        messages: data
+      })
+    })
+
     this.state.socket = socket
     this.setState(this.state)
   }
@@ -587,7 +593,7 @@ class App extends React.Component {
         username: this.state.username,
         channels: this.state.channels,
         channel: ch,
-        messages: ch.messages
+        messages: []
       });
       this.updateServer();
       this.state.socket.emit('channel-join', ch, ack => {

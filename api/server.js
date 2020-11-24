@@ -39,6 +39,7 @@ app.get('/getChannels', (req, res) => {
     res.json({
         channels: channels
     })
+    io.emit('updateChannel' ,channels)
 })
 
 app.post('/updateChannels', (req, res) => {
@@ -67,6 +68,7 @@ io.on('connect', (socket) => {
             })
         })
         console.log(address + ':' + port + ' Disconnected!!')
+        io.emit('updateChannel', channels)
     })
 
     socket.on('send-message', data => {
@@ -77,13 +79,14 @@ io.on('connect', (socket) => {
         if(data.isFileAttached) console.log(data.file);
 
         toSend = {socketid: socket.id, username: data.senderName, message: data.message, isFileAttached: data.isFileAttached, file: data.file}
+        let ch = channels
         if(data.channel.channelName === "__broadcast") {
-            for(let i=0;i<channels.length; i++) {
-                channels[i].messages.push(toSend)
+            for(let i=0;i<ch.length; i++) {
+                ch[i].messages.push(toSend)
             }
             io.emit('message', toSend)
         }
-        channels.find(c=> {
+        ch.find(c=> {
             if(c.channelName === data.channel.channelName) {
                 c.messages.push(toSend)
                 for(let i=0;i<c.participants.length; i++) {
@@ -91,6 +94,7 @@ io.on('connect', (socket) => {
                 }
             }
         })
+        channels = ch
         io.emit('updateChannel', channels)
         console.log(channels)
     })
@@ -102,7 +106,9 @@ io.on('connect', (socket) => {
             console.log('channel-join request done')
             return "OK"
         });
-
+        io.emit('updateChannel', channels)
+        console.log(ch.messages)
+        io.to(socket.id).emit('messages', ch.messages)
     })
 })
 
