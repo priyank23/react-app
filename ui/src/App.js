@@ -247,9 +247,13 @@ class Channels extends React.Component {
       showForm: false
     }
     this.newChannel = React.createRef()
-
+    this.createChannel = this.createChannel.bind(this)
   }
 
+  createChannel(ch) {
+    this.setState({showForm: false})
+    this.props.createChannel(ch)
+  }
   render() {
     return (
       <div className="channelblock">
@@ -266,7 +270,7 @@ class Channels extends React.Component {
         <InputGroup className="mb-3" size='sm'>
           <InputGroup.Append>
             <Button variant="info" onClick={() => {this.setState({showForm: true})}} block>New Channel</Button>
-            {this.state.showForm && <ChannelForm show={this.state.showForm} createChannel={this.props.createChannel}/>}
+            {this.state.showForm && <ChannelForm show={this.state.showForm} createChannel={this.createChannel}/>}
           </InputGroup.Append>
         </InputGroup>
       </div>
