@@ -55,7 +55,7 @@ io.on('connect', (socket) => {
     let port = socket.request.connection.remotePort
     console.log('New connection from ' + address + ":" + port)
 
-    socket.emit('connection', null);
+    socket.emit('updateChannel', channels);
 
     socket.on('disconnect', () => {
         channels.find((c, index)=> {
@@ -79,24 +79,24 @@ io.on('connect', (socket) => {
         if(data.isFileAttached) console.log(data.file);
 
         toSend = {socketid: socket.id, username: data.senderName, message: data.message, isFileAttached: data.isFileAttached, file: data.file}
-        let ch = channels
+        
         if(data.channel.channelName === "__broadcast") {
-            for(let i=0;i<ch.length; i++) {
-                ch[i].messages.push(toSend)
+            for(let i=0;i<channels.length; i++) {
+                channels[i].messages.push(toSend)
             }
             io.emit('message', toSend)
         }
-        ch.find(c=> {
+        channels.find((c, index)=> {
             if(c.channelName === data.channel.channelName) {
                 c.messages.push(toSend)
+                channels[index] = c
                 for(let i=0;i<c.participants.length; i++) {
                     io.to(c.participants[i].socketid).emit('message', toSend);
                 }
             }
         })
-        channels = ch
+        console.log(toSend)
         io.emit('updateChannel', channels)
-        console.log(channels)
     })
     socket.on('channel-join', ch => {
         channels.find((c, index)=> {

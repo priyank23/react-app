@@ -142,7 +142,7 @@ class MessageBox extends React.Component {
   }
 
   toBase64(arr) {
-    if(arr.data) {
+    if(arr) {
       return btoa(
         arr.data.reduce((data, byte) => data + String.fromCharCode(byte), '')
       )
@@ -157,7 +157,8 @@ class MessageBox extends React.Component {
         <div className='text_wrapper'>
           <div className="username">{this.props.appearance === 'right' ? "You" : this.props.username}</div>
           {this.props.message? <div className="text">{this.props.message}</div>: null}
-          {this.props.file? <img style={{height:"10em", maxWidth: "20em"}} src={this.props.file.data? "data:image/png;base64," + this.toBase64(this.props.file) : URL.createObjectURL(new Blob([this.props.file]))}/> : null}
+          {console.log(this.props.file)}
+          {this.props.file? <img style={{height:"10em", maxWidth: "20em"}} src={this.props.file.__proto__ === "ArrayBuffer" ?"data:image/png;base64," + this.toBase64(this.props.file) : URL.createObjectURL(new Blob([this.props.file]))}/> : null}
         </div>
       </li>
     )
@@ -471,13 +472,11 @@ class App extends React.Component {
     this.loadChannels = this.loadChannels.bind(this)
 
     this.configureSocket();
-  }
-
-  componentDidMount() {
     this.loadChannels()
   }
 
   async loadChannels() {
+    console.log('loading channels')
     fetch('http://localhost:8000/getChannels').then(async response => {
       let data = await response.json();
       this.setState({
@@ -485,10 +484,6 @@ class App extends React.Component {
       });
     })
   }
-
-  // componentWillUnmount() {
-  //   clearInterval(this.intervalId)
-  // }
 
   configureSocket() {
     console.log('Configuring Socket');
@@ -561,7 +556,7 @@ class App extends React.Component {
       if (c.channelName === id) {
         if(c.channelType === 'private') {
           if(c.password !== password) {
-            alert('Wrong Passoword! Try Again!')
+            alert('Wrong Password! Try Again!')
             return
           }
         }
