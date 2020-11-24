@@ -91,6 +91,7 @@ io.on('connect', (socket) => {
                 }
             }
         })
+        io.emit('updateChannel', channels)
         console.log(channels)
     })
     socket.on('channel-join', ch => {

@@ -246,26 +246,8 @@ class Channels extends React.Component {
     this.state={
       showForm: false
     }
-    this.newChannel = React.createRef();
+    this.newChannel = React.createRef()
 
-    this.createChannel = this.createChannel.bind(this);
-    this.handleKeyPress = this.handleKeyPress.bind(this);
-
-  }
-
-  createChannel() {
-    // this.state.showForm = true
-    // this.setState(this.state)
-    if (this.newChannel.current.value && this.newChannel.current.value !== "") {
-      this.props.createChannel(this.newChannel.current.value);
-      this.newChannel.current.value = null;
-    }
-  }
-
-  handleKeyPress(e) {
-    if (e.key === "Enter") {
-      this.createChannel();
-    }
   }
 
   render() {
@@ -277,21 +259,16 @@ class Channels extends React.Component {
           </div>
           <ul style={{ padding: 0 }}>
             {this.props.channels.map((channel, index) =>
-              <Channel key={index} handleChannelClick={this.props.handleChannelClick} deleteChannel={this.props.deleteChannel} isSelected={channel.channelName !== this.props.joinedChannel? false: true} channelName={channel["channelName"]} participants={channel["participants"]} number_of_users={channel["number_of_users"]} />
+              <Channel key={index} handleChannelClick={this.props.handleChannelClick} deleteChannel={this.props.deleteChannel} isSelected={channel.channelName !== this.props.joinedChannel? false: true} type={channel['channelType']} channelName={channel["channelName"]} participants={channel["participants"]} number_of_users={channel["number_of_users"]} />
             )}
           </ul>
         </div>
-        <InputGroup className="mb-3" size='sm' onKeyPress={this.handleKeyPress}>
-          <FormControl
-            placeholder="Channel"
-            ref={this.newChannel}
-          />
+        <InputGroup className="mb-3" size='sm'>
           <InputGroup.Append>
-            <Button variant="info" onClick={() => {this.setState({showForm: true})}}>Create</Button>
-            {this.state.showForm && <ChannelForm show={this.state.showForm}/>}
+            <Button variant="info" onClick={() => {this.setState({showForm: true})}} block>New Channel</Button>
+            {this.state.showForm && <ChannelForm show={this.state.showForm} createChannel={this.props.createChannel}/>}
           </InputGroup.Append>
         </InputGroup>
-        
       </div>
     )
   }
@@ -303,29 +280,43 @@ class Channel extends React.Component {
     super(props)
 
     this.state = {
-      showDialog: false
+      showinfo: false,
+      passwordInput: false,
+      password: null
     }
 
     this.click = this.click.bind(this);
     this.handleClose = this.handleClose.bind(this);
     this.handleOpen = this.handleOpen.bind(this)
     this.deleteChannel = this.deleteChannel.bind(this)
+    this.checkPassword = this.checkPassword.bind(this)
   }
 
   click() {
-    this.props.handleChannelClick(this.props.channelName);
+    if(this.props.isSelected) {
+      console.log('Already joined in this channel')
+    }
+    if(this.props.type==='private') {
+      this.setState({passwordInput: true})
+    } else 
+    this.props.handleChannelClick(this.props.channelName, null);
   }
 
   handleClose() {
-    this.setState({showDialog: false})
+    this.setState({showinfo: false})
   }
 
   handleOpen() {
-    this.setState({showDialog: true})
+    this.setState({showinfo: true})
   }
 
   deleteChannel() {
     this.props.deleteChannel(this.props.channelName)
+  }
+
+  checkPassword() {
+    this.setState({passwordInput: false})
+    this.props.handleChannelClick(this.props.channelName, this.state.password)
   }
 
   render() {
@@ -346,7 +337,25 @@ class Channel extends React.Component {
           {/* <Card.Link >Delete Group</Card.Link> */}
         </Card.Body>
       </Card>
-      <Modal show={this.state.showDialog} onHide={this.handleClose} centered>
+
+      <Modal name="channel-join" show={this.state.passwordInput} onHide={() => {this.setState({passwordInput: false})}} onKeyPress={(e) => {if(e.Key === "Enter" && this.state.password) this.checkPassword()}} centered>
+        <Modal.Header closeButton>
+          <Modal.Title>Private Channel</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group controlId="password">
+              <Form.Label>Password</Form.Label>
+              <Form.Control type="password" onChange={(e) => this.setState({password: e.target.value})} placeholder="Enter Password"/>
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="primary" onClick={this.checkPassword}>Join</Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal name="channel-info" show={this.state.showinfo} onHide={this.handleClose} centered>
       <Modal.Header closeButton>
         <Modal.Title>{this.props.channelName}</Modal.Title>
       </Modal.Header>
@@ -363,6 +372,7 @@ class Channel extends React.Component {
         </Button>
       </Modal.Footer>
     </Modal>
+
     </>
     )
   }
@@ -374,10 +384,23 @@ class ChannelForm extends React.Component {
     super(props)
     this.state={
       showDialog: this.props.show,
-      showPasswordInput: false
+      showPasswordInput: false,
+      channel: {
+        channelName: null,
+        channelType: "public",
+        password: null
+      }
     }
     this.name = React.createRef()
     this.password = React.createRef()
+
+    this.createChannel = this.createChannel.bind(this)
+  }
+
+  createChannel() {
+    this.props.createChannel(this.state.channel)
+    console.log(this.state.channel)
+    this.setState({showDialog: false})
   }
 
   render() {
@@ -392,23 +415,23 @@ class ChannelForm extends React.Component {
           <Form>
             <Form.Group controlId="channelName">
               <Form.Label>Name</Form.Label>
-              <Form.Control ref={this.name} type="text" placeholder="Enter channel name"/>
+              <Form.Control onChange={(e)=> {if(e.target.value) this.state.channel.channelName=e.target.value}} type="text" placeholder="Enter channel name"/>
             </Form.Group>
             <Form.Group controlId="channelType">
               <div key="inline-checkbox" className="mb-3">
                 <Form.Check inline label="public" type='checkbox' id="publicChannel" />
-                <Form.Check inline label="private" type='checkbox' id="privateChannel" onChange={(e)=> {this.setState({showPasswordInput: e.target.checked})}}/>
+                <Form.Check inline label="private" type='checkbox' id="privateChannel" onChange={(e)=> {this.state.channel.channelType = e.target.checked? 'private': 'public'; this.setState({showPasswordInput: e.target.checked});}}/>
               </div>
             </Form.Group>
             {this.state.showPasswordInput &&
               <Form.Group controlId="password">
               <Form.Label>Password</Form.Label>
-              <Form.Control ref={this.password} type="text" placeholder="Enter password" required/>
+              <Form.Control type="text" placeholder="Enter password" onChange={(e) => {this.state.channel.password=e.target.value}} required/>
             </Form.Group>}
           </Form>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="primary" onClick={() => {this.setState({showDialog: false})}}>
+          <Button variant="primary" onClick={this.createChannel}>
             Create
           </Button>
         </Modal.Footer>
@@ -501,13 +524,15 @@ class App extends React.Component {
   createChannel(newChannel) {
     console.log(newChannel)
     let channels = this.state.channels
-    if(channels.find(ch=> ch.channelName === newChannel)) {
+    if(channels.find(ch=> ch.channelName === newChannel.channelName)) {
       alert('Channel name already exists')
       return
     }
     console.log('[createChannel] '+ newChannel)
     channels = [...channels, {
-      channelName: newChannel,
+      channelName: newChannel.channelName,
+      channelType: newChannel.channelType,
+      password: newChannel.password,
       number_of_users: 0,
       participants: [],
       messages: [],
@@ -516,45 +541,55 @@ class App extends React.Component {
     this.updateServer()
   }
 
-  handleChannelClick(id) {
+  handleChannelClick(id, password) {
     if (this.state.username === null || this.state.username === "") {
       alert('Enter a userame first');
       return
     }
-    if (this.state.channel != null) {
-      let channels = this.state.channels
-      channels.find((c, index) => {
-        if (c.channelName === this.state.channel.channelName) {
-          c.number_of_users--
-          c.participants = c.participants.filter(p => p.socketid !== this.state.socket.id)
-          channels[index] = c
-        }
-      });
-      this.state.channels = channels
-      this.state.channel = null
-      this.state.messages = []
-      this.setState(this.state);
-    }
+
     let ch = this.state.channels.find(c => {
       if (c.channelName === id) {
+        if(c.channelType === 'private') {
+          if(c.password !== password) {
+            alert('Wrong Passoword! Try Again!')
+            return
+          }
+        }
+
+        if (this.state.channel != null) {
+          let channels = this.state.channels
+          channels.find((c, index) => {
+            if (c.channelName === this.state.channel.channelName) {
+              c.number_of_users--
+              c.participants = c.participants.filter(p => p.socketid !== this.state.socket.id)
+              channels[index] = c
+            }
+          });
+          this.state.channels = channels
+          this.state.channel = null
+          this.state.messages = []
+          this.setState(this.state);
+        }
+
         c.number_of_users++
         c.participants.push({ socketid: this.state.socket.id, username: this.state.username });
         return true
       }
       return false
     });
-
-    this.setState({
-      socket: this.state.socket,
-      username: this.state.username,
-      channels: this.state.channels,
-      channel: ch,
-      messages: ch.messages
-    });
-    this.updateServer();
-    this.state.socket.emit('channel-join', ch, ack => {
-      console.log("joined channel" + ch);
-    })
+    if(ch) {
+      this.setState({
+        socket: this.state.socket,
+        username: this.state.username,
+        channels: this.state.channels,
+        channel: ch,
+        messages: ch.messages
+      });
+      this.updateServer();
+      this.state.socket.emit('channel-join', ch, ack => {
+        console.log("joined channel" + ch);
+      })
+    }
   }
 
   handleNameClick(name) {
